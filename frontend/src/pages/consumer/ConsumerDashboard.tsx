@@ -854,6 +854,7 @@ const ConsumerDashboard: React.FC = () => {
     isFetchingRef.current = true;
     setLoadingReadings(true);
 
+  
     fetchMeterReadingsFromSenseflow(
       consumer.meterId,
       consumer._id,
@@ -1201,7 +1202,11 @@ const ConsumerDashboard: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredReadings.map((reading) => (
+                    {filteredReadings  .slice()
+  .sort(
+    (a, b) =>
+      new Date(b.readingDate).getTime() -
+      new Date(a.readingDate).getTime()).map((reading) => (
                       <TableRow key={reading.id}>
                         <TableCell>{format(parseISO(reading.readingDate), 'dd MMM yyyy')}</TableCell>
                         <TableCell className="font-medium">{reading.reading.toLocaleString()} L</TableCell>
