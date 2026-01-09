@@ -145,30 +145,26 @@ const ConsumerDashboard: React.FC = () => {
   }, [consumer?._id, token]);
 
   /* ================= FETCH READINGS ================= */
-  useEffect(() => {
-  if (!startDate || !endDate) return;
+useEffect(() => {
+  if (!consumer || !startDate || !endDate) return;
 
   setAppliedStartDate(startDate);
   setAppliedEndDate(endDate);
-}, []);
+}, [consumer]);
+useEffect(() => {
+  if (!consumer || !appliedStartDate || !appliedEndDate) return;
 
-  useEffect(() => {
-if (!consumer || !appliedStartDate || !appliedEndDate) return;
+  setLoadingReadings(true);
 
-    setLoadingReadings(true);
-
-  
-    fetchMeterReadingsFromSenseflow(
-      consumer.meterId,
-      consumer._id,
-      format(appliedStartDate, 'yyyy-MM-dd'),
-      format(appliedEndDate, 'yyyy-MM-dd')
-    )
-      .then(setReadings)
-      .finally(() => {
-        setLoadingReadings(false);
-      });
-  }, [consumer?._id, appliedStartDate, appliedEndDate]);
+  fetchMeterReadingsFromSenseflow(
+    consumer.meterId,
+    consumer._id,
+    format(appliedStartDate, 'yyyy-MM-dd'),
+    format(appliedEndDate, 'yyyy-MM-dd')
+  )
+    .then(setReadings)
+    .finally(() => setLoadingReadings(false));
+}, [consumer?._id, appliedStartDate, appliedEndDate]);
 
   /* ================= LAST ACTIVE ================= */
   useEffect(() => {
