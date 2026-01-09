@@ -150,6 +150,7 @@ useEffect(() => {
 
   setAppliedStartDate(startDate);
   setAppliedEndDate(endDate);
+    applyQuickFilter(7);
 }, [consumer]);
 useEffect(() => {
   if (!consumer || !appliedStartDate || !appliedEndDate) return;
