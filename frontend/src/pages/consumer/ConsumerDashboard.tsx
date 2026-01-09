@@ -733,6 +733,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { FREE_TIER_LITERS } from '@/types';
+const API_URL2 = import.meta.env.VITE_API_URL;
 import {
   Droplets,
   DollarSign,
@@ -768,7 +769,7 @@ import {
   fetchLatestFlowmeterStatus,
 } from '../../services/senseflow';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = API_URL2;
 const consumerNavItems = [{ label: 'Dashboard', href: '/dashboard' }];
 
 const ConsumerDashboard: React.FC = () => {
