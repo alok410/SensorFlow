@@ -33,7 +33,6 @@ import { FREE_TIER_LITERS } from '@/types';
 const API_URL2 = import.meta.env.VITE_API_URL;
 import {
   Droplets,
-  DollarSign,
   FileText,
   CreditCard,
   TrendingUp,
@@ -41,6 +40,7 @@ import {
   Gift,
   CalendarIcon,
   BarChart3,
+  IndianRupee ,
   Clock,
 } from 'lucide-react';
 import {
@@ -293,7 +293,7 @@ const ConsumerDashboard: React.FC = () => {
 
         <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
           <StatsCard title="Prepaid Balance" value={`₹${currentPrepaidBalance.toFixed(2)}`} icon={Wallet} variant="success" />
-          <StatsCard title="Outstanding Amount" value={`₹${totalOutstanding.toFixed(2)}`} icon={DollarSign} variant={totalOutstanding > 0 ? 'warning' : 'success'} />
+          <StatsCard title="Outstanding Amount" value={`₹${totalOutstanding.toFixed(2)}`} icon={IndianRupee} variant={totalOutstanding > 0 ? 'warning' : 'success'} />
           <StatsCard title="Free Tier" value={`${FREE_TIER_LITERS.toLocaleString()} L`} icon={Gift} variant="primary" />
           <StatsCard title="Last Reading" value={`${(lastReading?.reading || 0).toLocaleString()} L`} icon={Droplets} variant="default" />
           <StatsCard title="Last Consumption" value={`${(lastReading?.consumption || 0).toLocaleString()} L`} icon={TrendingUp} variant="default" />
