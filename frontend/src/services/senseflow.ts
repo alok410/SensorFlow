@@ -16,14 +16,21 @@ const getTodayDate = (): string => {
   const today = new Date();
   return today.toISOString().split('T')[0]; // YYYY-MM-DD
 };
-export const fetchLatestFlowmeterStatus = async (deviceId: string): Promise<string> => {
-  const token = 'TtiW3L8vWbrhNXIACx5dYDCHUdFHnNrGQzjbROMFai42C1Tx7hD7bra8RjWWytFa'; // <-- your API token
+type FlowmeterStatus = {
+  last_active: string;
+  meter_reading: string;
+};
+
+export const fetchLatestFlowmeterStatus = async (
+  deviceId: string
+): Promise<FlowmeterStatus> => {
+  const token = 'TtiW3L8vWbrhNXIACx5dYDCHUdFHnNrGQzjbROMFai42C1Tx7hD7bra8RjWWytFa';
 
   const url = `https://apps.samasth.io:8090/api/Senseflow/Flowmeter/latest?device=${deviceId}`;
 
   const response = await fetch(url, {
     headers: {
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
   });
@@ -41,9 +48,12 @@ export const fetchLatestFlowmeterStatus = async (deviceId: string): Promise<stri
     rssi: string;
   } = await response.json();
 
-  // return only the last_active timestamp
-  return json.last_active;
+  return {
+    last_active: json.last_active,
+    meter_reading: json.meter_reading,
+  };
 };
+
 
 export const fetchMeterReadingsFromSenseflow = async (
   deviceId: string,
