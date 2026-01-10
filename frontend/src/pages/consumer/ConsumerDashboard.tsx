@@ -112,8 +112,8 @@ const ConsumerDashboard: React.FC = () => {
   useEffect(() => {
     if (!token) return;
 
-    fetch(`${API_URL}/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
+    fetch(`₹{API_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ₹{token}` },
     })
       .then(async (r) => {
         if (!r.ok) throw new Error();
@@ -134,14 +134,14 @@ const ConsumerDashboard: React.FC = () => {
   useEffect(() => {
     if (!consumer?._id) return;
 
-    fetch(`${API_URL}/invoices/consumer/${consumer._id}`, {
-      headers: { Authorization: `Bearer ${token}` },
+    fetch(`₹{API_URL}/invoices/consumer/₹{consumer._id}`, {
+      headers: { Authorization: `Bearer ₹{token}` },
     })
       .then((r) => r.json())
       .then(setInvoices);
 
-    fetch(`${API_URL}/prepaid/${consumer._id}`, {
-      headers: { Authorization: `Bearer ${token}` },
+    fetch(`₹{API_URL}/prepaid/₹{consumer._id}`, {
+      headers: { Authorization: `Bearer ₹{token}` },
     })
       .then((r) => r.json())
       .then((d) => setPrepaidBalance(d.balance || 0));
@@ -251,7 +251,7 @@ const ConsumerDashboard: React.FC = () => {
   const handleRecharge = () => {
     toast({
       title: 'Recharge',
-      description: `Recharge of $${rechargeAmount} initiated`,
+      description: `Recharge of ₹₹{rechargeAmount} initiated`,
     });
     setIsRechargeDialogOpen(false);
   };
@@ -292,11 +292,11 @@ const ConsumerDashboard: React.FC = () => {
         </div>
 
         <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
-          <StatsCard title="Prepaid Balance" value={`$${currentPrepaidBalance.toFixed(2)}`} icon={Wallet} variant="success" />
-          <StatsCard title="Outstanding Amount" value={`$${totalOutstanding.toFixed(2)}`} icon={DollarSign} variant={totalOutstanding > 0 ? 'warning' : 'success'} />
-          <StatsCard title="Free Tier" value={`${FREE_TIER_LITERS.toLocaleString()} L`} icon={Gift} variant="primary" />
-          <StatsCard title="Last Reading" value={`${(lastReading?.reading || 0).toLocaleString()} L`} icon={Droplets} variant="default" />
-          <StatsCard title="Last Consumption" value={`${(lastReading?.consumption || 0).toLocaleString()} L`} icon={TrendingUp} variant="default" />
+          <StatsCard title="Prepaid Balance" value={`₹₹{currentPrepaidBalance.toFixed(2)}`} icon={Wallet} variant="success" />
+          <StatsCard title="Outstanding Amount" value={`₹₹{totalOutstanding.toFixed(2)}`} icon={DollarSign} variant={totalOutstanding > 0 ? 'warning' : 'success'} />
+          <StatsCard title="Free Tier" value={`₹{FREE_TIER_LITERS.toLocaleString()} L`} icon={Gift} variant="primary" />
+          <StatsCard title="Last Reading" value={`₹{(lastReading?.reading || 0).toLocaleString()} L`} icon={Droplets} variant="default" />
+          <StatsCard title="Last Consumption" value={`₹{(lastReading?.consumption || 0).toLocaleString()} L`} icon={TrendingUp} variant="default" />
           <StatsCard title="Pending Bills" value={pendingInvoices.length} icon={FileText} variant={pendingInvoices.length > 0 ? 'warning' : 'default'} />
           <StatsCard
             title="Last Active"
@@ -319,7 +319,7 @@ const ConsumerDashboard: React.FC = () => {
               loadingLastActive
                 ? "Loading..."
                 : latestStatus?.meter_reading
-                  ? `${Number(latestStatus.meter_reading).toLocaleString()} L`
+                  ? `₹{Number(latestStatus.meter_reading).toLocaleString()} L`
                   : "—"
             }
             icon={Droplets}
@@ -370,7 +370,7 @@ const ConsumerDashboard: React.FC = () => {
                       <TableCell className="text-sm">{new Date(invoice.createdAt).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <div>
-                          <span className="font-semibold">${invoice.totalAmount.toFixed(2)}</span>
+                          <span className="font-semibold">₹{invoice.totalAmount.toFixed(2)}</span>
                           <p className="text-xs text-muted-foreground">
                             {invoice.consumption.toLocaleString()}L used ({invoice.chargeableConsumption?.toLocaleString() || 0}L charged)
                           </p>
@@ -499,7 +499,7 @@ const ConsumerDashboard: React.FC = () => {
               </div>
               <div className="p-4 rounded-lg bg-success/10 border border-success/20">
                 <p className="text-sm text-muted-foreground">Estimated Bill</p>
-                <p className="text-2xl font-bold text-success">${monthlyAnalysis.estimatedBill.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-success">₹{monthlyAnalysis.estimatedBill.toFixed(2)}</p>
               </div>
             </div>
 
@@ -583,7 +583,7 @@ const ConsumerDashboard: React.FC = () => {
             </DialogHeader>
             <div className="py-4 space-y-6">
               <p className="text-3xl font-bold text-center text-primary">
-                ${selectedInvoiceData?.totalAmount.toFixed(2)}
+                ₹{selectedInvoiceData?.totalAmount.toFixed(2)}
               </p>
 
               <Tabs defaultValue="online" onValueChange={(v) => setPaymentMethod(v as 'online' | 'prepaid')}>
@@ -613,7 +613,7 @@ const ConsumerDashboard: React.FC = () => {
                     <CardContent className="pt-4 space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Available Balance:</span>
-                        <span className="font-semibold text-lg">${currentPrepaidBalance.toFixed(2)}</span>
+                        <span className="font-semibold text-lg">₹{currentPrepaidBalance.toFixed(2)}</span>
                       </div>
                       {!canPayWithPrepaid && (
                         <p className="text-sm text-destructive">
@@ -649,24 +649,24 @@ const ConsumerDashboard: React.FC = () => {
               <div className="p-4 rounded-lg bg-muted/50">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Current Balance:</span>
-                  <span className="font-semibold text-lg">${currentPrepaidBalance.toFixed(2)}</span>
+                  <span className="font-semibold text-lg">₹{currentPrepaidBalance.toFixed(2)}</span>
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="amount">Recharge Amount ($)</Label>
+                <Label htmlFor="amount">Recharge Amount (₹)</Label>
                 <Input id="amount" type="number" value={rechargeAmount} onChange={(e) => setRechargeAmount(e.target.value)} min="1" />
               </div>
               <div className="flex gap-2">
                 {[25, 50, 100, 200].map(amt => (
                   <Button key={amt} variant="outline" size="sm" onClick={() => setRechargeAmount(amt.toString())}>
-                    ${amt}
+                    ₹{amt}
                   </Button>
                 ))}
               </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsRechargeDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleRecharge}>Recharge ${rechargeAmount}</Button>
+              <Button onClick={handleRecharge}>Recharge ₹{rechargeAmount}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
