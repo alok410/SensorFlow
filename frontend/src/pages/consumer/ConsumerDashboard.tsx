@@ -370,7 +370,7 @@ const ConsumerDashboard: React.FC = () => {
                       <TableCell className="text-sm">{new Date(invoice.createdAt).toLocaleDateString()}</TableCell>
                       <TableCell>
                         <div>
-                          <span className="font-semibold">${invoice.totalAmount.toFixed(2)}</span>
+                          <span className="font-semibold">₹{invoice.totalAmount.toFixed(2)}</span>
                           <p className="text-xs text-muted-foreground">
                             {invoice.consumption.toLocaleString()}L used ({invoice.chargeableConsumption?.toLocaleString() || 0}L charged)
                           </p>
@@ -583,7 +583,7 @@ const ConsumerDashboard: React.FC = () => {
             </DialogHeader>
             <div className="py-4 space-y-6">
               <p className="text-3xl font-bold text-center text-primary">
-                ${selectedInvoiceData?.totalAmount.toFixed(2)}
+                ₹{selectedInvoiceData?.totalAmount.toFixed(2)}
               </p>
 
               <Tabs defaultValue="online" onValueChange={(v) => setPaymentMethod(v as 'online' | 'prepaid')}>
@@ -613,7 +613,7 @@ const ConsumerDashboard: React.FC = () => {
                     <CardContent className="pt-4 space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Available Balance:</span>
-                        <span className="font-semibold text-lg">${currentPrepaidBalance.toFixed(2)}</span>
+                        <span className="font-semibold text-lg">₹{currentPrepaidBalance.toFixed(2)}</span>
                       </div>
                       {!canPayWithPrepaid && (
                         <p className="text-sm text-destructive">
@@ -649,24 +649,24 @@ const ConsumerDashboard: React.FC = () => {
               <div className="p-4 rounded-lg bg-muted/50">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Current Balance:</span>
-                  <span className="font-semibold text-lg">${currentPrepaidBalance.toFixed(2)}</span>
+                  <span className="font-semibold text-lg">₹{currentPrepaidBalance.toFixed(2)}</span>
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="amount">Recharge Amount ($)</Label>
+                <Label htmlFor="amount">Recharge Amount (₹)</Label>
                 <Input id="amount" type="number" value={rechargeAmount} onChange={(e) => setRechargeAmount(e.target.value)} min="1" />
               </div>
               <div className="flex gap-2">
                 {[25, 50, 100, 200].map(amt => (
                   <Button key={amt} variant="outline" size="sm" onClick={() => setRechargeAmount(amt.toString())}>
-                    ${amt}
+                    ₹{amt}
                   </Button>
                 ))}
               </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsRechargeDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleRecharge}>Recharge ${rechargeAmount}</Button>
+              <Button onClick={handleRecharge}>Recharge ₹{rechargeAmount}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
