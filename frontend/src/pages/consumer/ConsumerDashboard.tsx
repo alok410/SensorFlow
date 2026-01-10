@@ -499,7 +499,7 @@ const ConsumerDashboard: React.FC = () => {
               </div>
               <div className="p-4 rounded-lg bg-success/10 border border-success/20">
                 <p className="text-sm text-muted-foreground">Estimated Bill</p>
-                <p className="text-2xl font-bold text-success">${monthlyAnalysis.estimatedBill.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-success">₹{monthlyAnalysis.estimatedBill.toFixed(2)}</p>
               </div>
             </div>
 
