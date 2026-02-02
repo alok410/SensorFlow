@@ -5,7 +5,6 @@ import generateToken from '../utils/generateToken.js';
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log(email)
     // 1. Validate input
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password required' });
@@ -30,7 +29,7 @@ export const login = async (req, res) => {
     
     // 5. Generate token
     const token = generateToken(user);
-    
+    console.log("Alok")
     // 6. Send response
      
     res.json({
