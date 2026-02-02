@@ -96,7 +96,7 @@ useEffect(() => {
 
         <Card className="border-border/50 shadow-xl">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-display">Welcome back</CardTitle>
+            <CardTitle className="text-2xl font-display">Welcome back again</CardTitle>
             <CardDescription>Sign in to your account to continue</CardDescription>
           </CardHeader>
           <CardContent>
