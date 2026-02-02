@@ -538,11 +538,7 @@ const ConsumerDashboard: React.FC = () => {
                                 {reading.consumption.toLocaleString()} L
                               </Badge>
                             </TableCell>
-                            <TableCell>
-                              <Badge variant="secondary">
-                                {reading.source === 'smart_meter' ? 'Smart Meter' : 'Manual'}
-                              </Badge>
-                            </TableCell>
+                           
                           </TableRow>
                         ))}
                 </TableBody>
