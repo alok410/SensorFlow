@@ -19,6 +19,7 @@ const Signup: React.FC = () => {
   const navigate = useNavigate();
 
   React.useEffect(() => {
+    
     if (user) {
       navigate(getDashboardPath(user.role));
     }
@@ -60,7 +61,7 @@ const Signup: React.FC = () => {
               <p className="text-sm text-muted-foreground">Water Management System</p>
             </div>
           </div>
-        </div>
+        </div> 
 
         <Card className="border-border/50 shadow-xl">
           <CardHeader className="space-y-1">

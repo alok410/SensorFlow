@@ -28,6 +28,8 @@ const Login: React.FC = () => {
 useEffect(() => {
   setCurrentUser(null);
   localStorage.removeItem('currentUser');
+  localStorage.clear();
+
   sessionStorage.clear();
 }, []);
 
