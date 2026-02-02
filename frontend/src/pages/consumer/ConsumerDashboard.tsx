@@ -520,7 +520,6 @@ const ConsumerDashboard: React.FC = () => {
                     <TableHead>Current Reading</TableHead>
                     <TableHead>Previous Reading</TableHead>
                     <TableHead>Consumption</TableHead>
-                    <TableHead>Source</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
