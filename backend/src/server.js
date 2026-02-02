@@ -1,10 +1,11 @@
-import 'dotenv/config';
+import 'dotenv/config';      
 import app from './app.js';
 import connectDB from './config/db.js';
 
-// ✅ Connect DB once (cached)
-await connectDB();
+const PORT = process.env.PORT || 5000;
 
-// ❌ NO app.listen()
-// ✅ Export app for Vercel
-export default app;
+connectDB();
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+});
