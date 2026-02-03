@@ -7,7 +7,6 @@ if (!MONGO_URI) {
   throw new Error('❌ Please define MONGO_URI in environment variables');
 }
 
-// Global cache (VERY IMPORTANT for Vercel)
 let cached = global.mongoose;
 
 if (!cached) {
