@@ -29,7 +29,6 @@ export const login = async (req, res) => {
     
     // 5. Generate token
     const token = generateToken(user);
-    console.log("Alok")
     // 6. Send response
      
     res.json({
