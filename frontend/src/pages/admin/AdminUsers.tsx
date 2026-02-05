@@ -118,7 +118,7 @@ const AdminUsers: React.FC = () => {
         id: generateId(),
         email: formData.email,
         name: formData.name,
-        role: 'user',
+        role: 'consumer',
         phone: formData.phone,
         address: formData.address,
         createdAt: new Date().toISOString(),

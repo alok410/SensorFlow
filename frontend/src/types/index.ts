@@ -7,7 +7,6 @@ export type Location = 'ahmedabad' | 'gandhinagar' | 'rajkot';
 export const LOCATIONS: { value: Location; label: string }[] = [
   { value: 'ahmedabad', label: 'Ahmedabad' },
   { value: 'gandhinagar', label: 'Gandhinagar' },
-  { value: 'rajkot', label: 'Rajkot' },
 ];
 
 export interface User {
