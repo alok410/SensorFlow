@@ -79,7 +79,7 @@ export const fetchMeterReadingsFromSenseflow = async (
   const json: SenseflowResponse = await response.json();
 
   return json.data.map((item, index) => ({
-    id: `sf-${consumerId}-${item.reading_date}-${index}`,
+    _id: `sf-${consumerId}-${item.reading_date}-${index}`,
     consumerId,
     meterId: json.serial_number,
     previousReading: Number(item.opening_reading),

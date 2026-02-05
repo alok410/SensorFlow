@@ -124,7 +124,7 @@ const AdminSecretaries = () => {
 
     if (editingSecretary) {
       const updated = secretaries.map((s) =>
-        s.id === editingSecretary.id ? { ...s, ...formData } : s
+        s._id === editingSecretary._id ? { ...s, ...formData } : s
       );
 
       setSecretaries(updated);
@@ -133,7 +133,7 @@ const AdminSecretaries = () => {
       const users = getUsers();
       setUsers(
         users.map((u) =>
-          u.id === editingSecretary.id ? { ...u, ...formData } : u
+          u.id === editingSecretary._id ? { ...u, ...formData } : u
         )
       );
 
@@ -143,7 +143,7 @@ const AdminSecretaries = () => {
       });
     } else {
       const newSecretary: Secretary = {
-        id: generateId(),
+        _id: generateId(),
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -172,11 +172,11 @@ const AdminSecretaries = () => {
 
   /* ---------------- DELETE ---------------- */
   const handleDelete = (secretary: Secretary) => {
-    const updated = secretaries.filter((s) => s.id !== secretary.id);
+    const updated = secretaries.filter((s) => s._id !== secretary._id);
     setSecretaries(updated);
     setSecretariesState(updated);
 
-    setUsers(getUsers().filter((u) => u.id !== secretary.id));
+    setUsers(getUsers().filter((u) => u.id !== secretary._id));
 
     toast({
       title: 'Secretary Deleted',
@@ -188,7 +188,7 @@ const AdminSecretaries = () => {
   /* ---------------- STATUS ---------------- */
   const toggleActive = (secretary: Secretary) => {
     const updated = secretaries.map((s) =>
-      s.id === secretary.id ? { ...s, isActive: !s.isActive } : s
+      s._id === secretary._id ? { ...s, isActive: !s.isActive } : s
     );
 
     setSecretaries(updated);
@@ -196,7 +196,7 @@ const AdminSecretaries = () => {
 
     setUsers(
       getUsers().map((u) =>
-        u.id === secretary.id ? { ...u, isActive: !secretary.isActive } : u
+        u.id === secretary._id ? { ...u, isActive: !secretary.isActive } : u
       )
     );
   };
@@ -362,7 +362,7 @@ const AdminSecretaries = () => {
 
               <TableBody>
                 {filteredSecretaries.map((s) => (
-                  <TableRow key={s.id}>
+                  <TableRow key={s._id}>
                     <TableCell>{s.name}</TableCell>
                     <TableCell>
                       {locations.find((l) => l._id === s.locationId)?.name}
@@ -370,7 +370,7 @@ const AdminSecretaries = () => {
                     <TableCell>{s.email}</TableCell>
                     <TableCell>
                       {consumers.filter(
-                        (c) => c.assignedSecretaryId === s.id
+                        (c) => c.assignedSecretaryId === s._id
                       ).length}
                     </TableCell>
                     <TableCell>

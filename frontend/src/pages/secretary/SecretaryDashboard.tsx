@@ -33,7 +33,7 @@ const SecretaryDashboard: React.FC = () => {
   const waterRates = getWaterRates();
   
   const assignedConsumers = allConsumers.filter(c => c.assignedSecretaryId === user?.id);
-  const assignedConsumerIds = assignedConsumers.map(c => c.id);
+  const assignedConsumerIds = assignedConsumers.map(c => c._id);
   
   const assignedInvoices = invoices.filter(inv => assignedConsumerIds.includes(inv.consumerId));
   const assignedReadings = meterReadings.filter(r => assignedConsumerIds.includes(r.consumerId));
@@ -56,8 +56,8 @@ const SecretaryDashboard: React.FC = () => {
 
   // Per-consumer usage data for chart
   const consumerUsageData = assignedConsumers.map(consumer => {
-    const consumerInvoices = assignedInvoices.filter(inv => inv.consumerId === consumer.id);
-    const consumerReadings = assignedReadings.filter(r => r.consumerId === consumer.id);
+    const consumerInvoices = assignedInvoices.filter(inv => inv.consumerId === consumer._id);
+    const consumerReadings = assignedReadings.filter(r => r.consumerId === consumer._id);
     const latestReading = consumerReadings.length > 0 
       ? consumerReadings.reduce((latest, r) => new Date(r.readingDate) > new Date(latest.readingDate) ? r : latest)
       : null;
@@ -110,7 +110,7 @@ const SecretaryDashboard: React.FC = () => {
 
     // Update prepaid balance
     const currentBalances = getPrepaidBalances();
-    const existingIndex = currentBalances.findIndex(b => b.consumerId === selectedConsumer.id);
+    const existingIndex = currentBalances.findIndex(b => b.consumerId === selectedConsumer._id);
 
     if (existingIndex >= 0) {
       currentBalances[existingIndex] = {
@@ -122,7 +122,7 @@ const SecretaryDashboard: React.FC = () => {
       };
     } else {
       currentBalances.push({
-        consumerId: selectedConsumer.id,
+        consumerId: selectedConsumer._id,
         balance: amount,
         lastRechargeAmount: amount,
         lastRechargeDate: new Date().toISOString(),
@@ -134,7 +134,7 @@ const SecretaryDashboard: React.FC = () => {
     // Record payment transaction
     const payment = {
       id: generateId(),
-      consumerId: selectedConsumer.id,
+      consumerId: selectedConsumer._id,
       amount,
       method: 'manual' as const,
       transactionId: `CASH-${Math.random().toString(36).substr(2, 10).toUpperCase()}`,
@@ -276,9 +276,9 @@ const SecretaryDashboard: React.FC = () => {
               </TableHeader>
               <TableBody>
                 {assignedConsumers.map((consumer) => {
-                  const usage = getConsumerUsage(consumer.id);
+                  const usage = getConsumerUsage(consumer._id);
                   return (
-                    <TableRow key={consumer.id}>
+                    <TableRow key={consumer._id}>
                       <TableCell>
                         <div>
                           <p className="font-medium">{consumer.name}</p>
@@ -301,7 +301,7 @@ const SecretaryDashboard: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <Wallet className="h-4 w-4 text-success" />
                           <span className="font-semibold text-success">
-                            ${getConsumerBalance(consumer.id).toFixed(2)}
+                            ${getConsumerBalance(consumer._id).toFixed(2)}
                           </span>
                         </div>
                       </TableCell>
@@ -338,7 +338,7 @@ const SecretaryDashboard: React.FC = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Current Balance:</span>
                   <span className="font-semibold text-lg text-success">
-                    ${selectedConsumer ? getConsumerBalance(selectedConsumer.id).toFixed(2) : '0.00'}
+                    ${selectedConsumer ? getConsumerBalance(selectedConsumer._id).toFixed(2) : '0.00'}
                   </span>
                 </div>
               </div>
