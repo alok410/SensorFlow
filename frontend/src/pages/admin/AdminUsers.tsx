@@ -79,9 +79,25 @@ const AdminUsers: React.FC = () => {
   ====================== */
 
 useEffect(() => {
-  getLocations().then((res) => {
-    setLocations(res.data);
-  });
+  const loadLocations = async () => {
+    try {
+      const res = await getLocations();
+
+      const locationsArray =
+        Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.data)
+          ? res.data.data
+          : [];
+
+      setLocations(locationsArray);
+    } catch (error) {
+      console.error('Failed to load locations', error);
+      setLocations([]);
+    }
+  };
+
+  loadLocations();
 }, []);
 
 
@@ -211,10 +227,12 @@ useEffect(() => {
      LOCATION STATS
   ====================== */
 
-  const locationStats = locations.map((loc) => ({
-    ...loc,
-    count: consumers.filter((c) => c.locationId === loc._id).length,
-  }));
+const locationStats = Array.isArray(locations)
+  ? locations.map((loc) => ({
+      ...loc,
+      count: consumers.filter((c) => c.locationId === loc._id).length,
+    }))
+  : [];
 
   /* ======================
      RENDER

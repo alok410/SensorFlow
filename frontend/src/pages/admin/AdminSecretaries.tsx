@@ -73,17 +73,28 @@ const AdminSecretaries = () => {
   });
 
   /* ---------------- LOAD LOCATIONS ---------------- */
-  useEffect(() => {
-    const loadLocations = async () => {
-      try {
-        const res = await getLocations();
-        setLocations(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    loadLocations();
-  }, []);
+ useEffect(() => {
+  const loadLocations = async () => {
+    try {
+      const res = await getLocations();
+
+      const locationsArray =
+        Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.data)
+          ? res.data.data
+          : [];
+
+      setLocations(locationsArray);
+    } catch (error) {
+      console.error('Failed to load locations', error);
+      setLocations([]);
+    }
+  };
+
+  loadLocations();
+}, []);
+
 
   /* ---------------- FILTER ---------------- */
   const filteredSecretaries = secretaries.filter((s) => {
