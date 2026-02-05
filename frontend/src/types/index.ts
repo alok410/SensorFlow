@@ -1,16 +1,29 @@
-export type UserRole = 'admin' | 'secretary' | 'consumer';
-export type AccountType = 'prepaid' | 'postpaid';
-export type InvoiceStatus = 'pending' | 'approved' | 'paid' | 'overdue';
-export type PaymentMethod = 'online' | 'manual' | 'prepaid_recharge';
-export type Location = 'ahmedabad' | 'gandhinagar' | 'rajkot';
+/* =======================
+   ENUM-LIKE TYPES
+======================= */
 
-export const LOCATIONS: { value: Location; label: string }[] = [
-  { value: 'ahmedabad', label: 'Ahmedabad' },
-  { value: 'gandhinagar', label: 'Gandhinagar' },
-];
+export type UserRole = "admin" | "secretary" | "consumer";
+export type AccountType = "prepaid" | "postpaid";
+export type InvoiceStatus = "pending" | "approved" | "paid" | "overdue";
+export type PaymentMethod = "online" | "manual" | "prepaid_recharge";
 
-export interface User {
-  id: string;
+/* =======================
+   LOCATION
+======================= */
+
+export interface Location {
+  _id: string;
+  code: string;
+  name: string;
+  isActive: boolean;
+}
+
+/* =======================
+   USER BASE
+======================= */
+
+export interface UserBase {
+  _id: string;              // ✅ Mongo-safe
   email: string;
   name: string;
   role: UserRole;
@@ -18,59 +31,75 @@ export interface User {
   address?: string;
   createdAt: string;
   isActive: boolean;
-  location?: Location;
+  locationId?: string;      // reference
+  location?: Location;      // populated object
 }
 
-export interface Consumer extends User {
-  role: 'consumer';
+/* =======================
+   USERS
+======================= */
+
+export interface Consumer extends UserBase {
+  role: "consumer";
   meterId: string;
   accountType: AccountType;
   assignedSecretaryId?: string;
   connectionDate: string;
-  location: Location;
+  locationId: string;       // required
 }
 
-export interface Secretary extends User {
-  role: 'secretary';
+export interface Secretary extends UserBase {
+  role: "secretary";
   assignedConsumerIds: string[];
-  location: Location;
+  locationId: string;
 }
 
-export interface Admin extends User {
-  role: 'admin';
+export interface Admin extends UserBase {
+  role: "admin";
 }
 
-// Simplified water rate - single rate per liter above free tier
+/* =======================
+   WATER RATE
+======================= */
+
 export interface WaterRate {
-  id: string;
-  ratePerLiter: number; // Rate per liter after free tier
-  freeTierLiters: number; // Free liters (default 13000)
+  _id: string;
+  ratePerLiter: number;
+  freeTierLiters: number;
   effectiveFrom: string;
   updatedAt: string;
   updatedBy?: string;
 }
 
+/* =======================
+   METER READING
+======================= */
+
 export interface MeterReading {
-  id: string;
+  _id: string;
   consumerId: string;
   meterId: string;
   reading: number;
   previousReading: number;
-  consumption: number; // in liters
+  consumption: number;
   readingDate: string;
-  source: 'smart_meter' | 'manual';
+  source: "smart_meter" | "manual";
 }
 
+/* =======================
+   INVOICE
+======================= */
+
 export interface Invoice {
-  id: string;
+  _id: string;
   consumerId: string;
   meterReadingId: string;
   billPeriodStart: string;
   billPeriodEnd: string;
-  consumption: number; // total liters
-  freeConsumption: number; // liters within free tier
-  chargeableConsumption: number; // liters above free tier
-  rateApplied: number; // rate per liter
+  consumption: number;
+  freeConsumption: number;
+  chargeableConsumption: number;
+  rateApplied: number;
   amount: number;
   lateFee: number;
   totalAmount: number;
@@ -80,8 +109,12 @@ export interface Invoice {
   paidAt?: string;
 }
 
+/* =======================
+   PAYMENT
+======================= */
+
 export interface Payment {
-  id: string;
+  _id: string;
   consumerId: string;
   invoiceId?: string;
   amount: number;
@@ -92,6 +125,10 @@ export interface Payment {
   recordedBy?: string;
 }
 
+/* =======================
+   PREPAID BALANCE
+======================= */
+
 export interface PrepaidBalance {
   consumerId: string;
   balance: number;
@@ -99,6 +136,10 @@ export interface PrepaidBalance {
   lastRechargeDate?: string;
   updatedAt: string;
 }
+
+/* =======================
+   DASHBOARD STATS
+======================= */
 
 export interface DashboardStats {
   totalConsumers: number;
@@ -118,5 +159,8 @@ export interface ConsumerStats {
   pendingAmount: number;
 }
 
-// Constants
+/* =======================
+   CONSTANTS
+======================= */
+
 export const FREE_TIER_LITERS = 13000;

@@ -47,7 +47,7 @@ const AdminRates: React.FC = () => {
     }
 
     const updatedRate: WaterRate = {
-      id: rate?.id || generateId(),
+      _id: rate?._id || generateId(),
       ratePerLiter: newRateValue,
       freeTierLiters: newFreeTier,
       effectiveFrom: rate?.effectiveFrom || new Date().toISOString(),

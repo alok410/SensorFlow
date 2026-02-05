@@ -223,10 +223,10 @@ const AdminDashboard: React.FC = () => {
             <CardContent>
               <div className="space-y-3">
                 {recentInvoices.map((invoice) => {
-                  const consumer = consumers.find(c => c.id === invoice.consumerId);
+                  const consumer = consumers.find(c => c._id === invoice.consumerId);
                   return (
                     <div
-                      key={invoice.id}
+                      key={invoice._id}
                       className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
                     >
                       <div>

@@ -33,17 +33,17 @@ const AdminInvoices: React.FC = () => {
   const { toast } = useToast();
 
   const filteredInvoices = invoices.filter((inv) => {
-    const consumer = consumers.find(c => c.id === inv.consumerId);
+    const consumer = consumers.find(c => c._id === inv.consumerId);
     const matchesSearch =
       consumer?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      inv.id.toLowerCase().includes(searchTerm.toLowerCase());
+      inv._id.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || inv.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const handleStatusChange = (invoice: Invoice, newStatus: InvoiceStatus) => {
     const updated = invoices.map((inv) =>
-      inv.id === invoice.id
+      inv._id === invoice._id
         ? {
             ...inv,
             status: newStatus,
@@ -61,9 +61,9 @@ const AdminInvoices: React.FC = () => {
 
     // Create payment record
     const payment: Payment = {
-      id: generateId(),
+      _id: generateId(),
       consumerId: selectedInvoice.consumerId,
-      invoiceId: selectedInvoice.id,
+      invoiceId: selectedInvoice._id,
       amount: selectedInvoice.totalAmount,
       method: 'manual',
       notes: paymentNotes,
@@ -149,10 +149,10 @@ const AdminInvoices: React.FC = () => {
               </TableHeader>
               <TableBody>
                 {filteredInvoices.map((invoice) => {
-                  const consumer = consumers.find(c => c.id === invoice.consumerId);
+                  const consumer = consumers.find(c => c._id === invoice.consumerId);
                   return (
-                    <TableRow key={invoice.id}>
-                      <TableCell className="font-mono text-sm">{invoice.id.slice(0, 12)}</TableCell>
+                    <TableRow key={invoice._id}>
+                      <TableCell className="font-mono text-sm">{invoice._id.slice(0, 12)}</TableCell>
                       <TableCell>
                         <div>
                           <p className="font-medium">{consumer?.name || 'Unknown'}</p>
@@ -208,7 +208,7 @@ const AdminInvoices: React.FC = () => {
             <DialogHeader>
               <DialogTitle>Record Manual Payment</DialogTitle>
               <DialogDescription>
-                Record a manual payment for invoice {selectedInvoice?.id.slice(0, 12)}
+                Record a manual payment for invoice {selectedInvoice?._id.slice(0, 12)}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
