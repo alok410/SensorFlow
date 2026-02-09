@@ -1,54 +1,23 @@
-// Import dependencies
+// Import dependencies using ES module syntax
 import express from 'express';
 import cors from 'cors';
 
 import authRoutes from './routes/auth.routes.js';
-import locationRoutes from './routes/location.routes.js';
-import secretaryRoutes from './routes/secretary.routes.js';
+import locationRoutes from './routes/location.routes.js'
+import  secretaryRoutes from './routes/secretary.routes.js'
+
 
 const app = express();
 
-/* =======================
-   CORS FIX (CRITICAL)
-======================= */
-
-const allowedOrigins = [
-  'https://sensor-flow-kappa.vercel.app',
-];
-
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-
-  res.setHeader(
-    'Access-Control-Allow-Methods',
-    'GET, POST, PUT, DELETE, OPTIONS'
-  );
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'Content-Type, Authorization'
-  );
-
-  // Handle preflight
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-
-  next();
-});
-
+// Middleware
+app.use(cors());
 app.use(express.json());
 
-/* =======================
-   ROUTES
-======================= */
-
+// Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/locations', locationRoutes);
+app.use("/api/locations", locationRoutes);
 app.use('/api/secretaries', secretaryRoutes);
+
 
 // Health check
 app.get('/api/health', (req, res) => {
