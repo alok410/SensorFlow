@@ -12,7 +12,9 @@ const adminNavItems = [
   { label: 'Secretaries', href: '/admin/secretaries' },
   { label: 'Rates', href: '/admin/rates' },
   { label: 'Invoices', href: '/admin/invoices' },
-];
+  { label: "Locations", href: "/admin/locations" },
+
+]
 
 const AdminDashboard: React.FC = () => {
   const consumers = getConsumers();

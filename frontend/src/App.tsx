@@ -16,6 +16,7 @@ import AdminInvoices from "./pages/admin/AdminInvoices";
 import SecretaryDashboard from "./pages/secretary/SecretaryDashboard";
 import ConsumerDashboard from "./pages/consumer/ConsumerDashboard";
 import NotFound from "./pages/NotFound";
+import AdminLocations from "./pages/admin/AdminLocation";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,8 @@ const App = () => (
             <Route path="/admin/secretaries" element={<ProtectedRoute allowedRoles={['admin']}><AdminSecretaries /></ProtectedRoute>} />
             <Route path="/admin/rates" element={<ProtectedRoute allowedRoles={['admin']}><AdminRates /></ProtectedRoute>} />
             <Route path="/admin/invoices" element={<ProtectedRoute allowedRoles={['admin']}><AdminInvoices /></ProtectedRoute>} />
+            <Route path="/admin/locations" element={<ProtectedRoute allowedRoles={['admin']}><AdminLocations/></ProtectedRoute>} />
+
             
             {/* Secretary Routes */}
             <Route path="/secretary" element={<ProtectedRoute allowedRoles={['secretary']}><SecretaryDashboard /></ProtectedRoute>} />
