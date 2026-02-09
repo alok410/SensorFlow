@@ -50,6 +50,8 @@ const adminNavItems = [
   { label: "Secretaries", href: "/admin/secretaries" },
   { label: "Rates", href: "/admin/rates" },
   { label: "Invoices", href: "/admin/invoices" },
+  { label: "Locations", href: "/admin/Locations" },
+
 ];
 
 const AdminUsers: React.FC = () => {
@@ -74,9 +76,9 @@ const AdminUsers: React.FC = () => {
     locationId: "",
   });
 
-  /* ======================
+  /*======================
      LOAD LOCATIONS
-  ====================== */
+  ======================*/
 
 useEffect(() => {
   const loadLocations = async () => {
@@ -121,9 +123,9 @@ useEffect(() => {
     (s) => s.locationId === formData.locationId
   );
 
-  /* ======================
+  /*====================
      HELPERS
-  ====================== */
+    ====================*/
 
   const resetForm = () => {
     setFormData({
@@ -156,9 +158,9 @@ useEffect(() => {
     setIsDialogOpen(true);
   };
 
-  /* ======================
+  /* =================== hy,n
      CREATE / UPDATE
-  ====================== */
+     =================== */
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
