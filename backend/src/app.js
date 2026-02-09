@@ -3,21 +3,29 @@ import express from 'express';
 import cors from 'cors';
 
 import authRoutes from './routes/auth.routes.js';
-import locationRoutes from './routes/location.routes.js'
-import  secretaryRoutes from './routes/secretary.routes.js'
-
+import locationRoutes from './routes/location.routes.js';
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// 🔥 CORS CONFIG (MUST BE FIRST)
+app.use(cors({
+  origin: [
+    "http://localhost:8080",
+    "https://sensor-flow-nbgt.vercel.app"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
+
+// 🔥 REQUIRED FOR PREFLIGHT
+app.options("*", cors());
+
 app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use("/api/locations", locationRoutes);
-app.use('/api/secretaries', secretaryRoutes);
-
 
 // Health check
 app.get('/api/health', (req, res) => {
