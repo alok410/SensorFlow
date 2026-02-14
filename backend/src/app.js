@@ -4,7 +4,7 @@ import cors from 'cors';
 
 import authRoutes from './routes/auth.routes.js';
 import locationRoutes from './routes/location.routes.js'
-import secretaryRoutes from "./routes/secretary.routes.js ";
+import secretaryRoutes from "./routes/secretary.routes.js";
 
 const app = express();
 
