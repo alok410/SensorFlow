@@ -46,22 +46,25 @@ export const getAllSecretaries = async (req, res) => {
     const secretaries = await User.find({ role: "secretary" })
       .populate("locationId");
 
-    // 🔥 Remove password manually using map
-    const filteredSecretaries = secretaries.map((sec) => ({
-      id: sec._id,
-      email: sec.email,
-      name: sec.name,
-      phone: sec.phone,
-      role: sec.role,
-      locationId: sec.locationId
-    }));
+    const result = secretaries.map((sec) => {
+      const { password, __v, ...data } = sec.toObject();
+      return data;
+    });
 
-    res.status(200).json(filteredSecretaries);
+    res.status(200).json({
+      success: true,
+      count: result.length,
+      data: result,
+    });
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
+
 
 
 

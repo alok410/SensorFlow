@@ -10,7 +10,9 @@ import {
 const router = express.Router();
 
 router.post("/", createSecretary);
-router.get("/", getAllSecretaries);
+// router.get("/", getAllSecretaries);
+router.get("/all", getAllSecretaries);
+
 router.get("/:id", getSecretaryById);
 router.put("/:id", updateSecretary);
 router.delete("/:id", deleteSecretary);
