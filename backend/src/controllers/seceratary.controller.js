@@ -44,14 +44,25 @@ export const createSecretary = async (req, res) => {
 export const getAllSecretaries = async (req, res) => {
   try {
     const secretaries = await User.find({ role: "secretary" })
-      .select("-password") // hide password
       .populate("locationId");
 
-    res.status(200).json(secretaries);
+    // 🔥 Remove password manually using map
+    const filteredSecretaries = secretaries.map((sec) => ({
+      id: sec._id,
+      email: sec.email,
+      name: sec.name,
+      phone: sec.phone,
+      role: sec.role,
+      locationId: sec.locationId
+    }));
+
+    res.status(200).json(filteredSecretaries);
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 
 /* ===============================
