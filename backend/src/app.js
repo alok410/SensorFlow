@@ -4,6 +4,7 @@ import cors from 'cors';
 
 import authRoutes from './routes/auth.routes.js';
 import locationRoutes from './routes/location.routes.js'
+import secretaryRoutes from "./routes/secretary.routes.js";
 
 const app = express();
 
@@ -12,13 +13,13 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use('/api/auth', authRoutes);
+app.use('/api/sec', authRoutes);
 app.use("/api/locations", locationRoutes);
-
+app.use("/api/secretaries", secretaryRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK2', message: 'SensorFlow API running' });
+  res.json({ status: 'OK', message: 'SensorFlow API running' });
 });
 
 export default app;
