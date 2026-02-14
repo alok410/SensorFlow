@@ -18,7 +18,7 @@ app.use("/api/locations", locationRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'SensorFlow API running' });
+  res.json({ status: 'OK2', message: 'SensorFlow API running' });
 });
 
 export default app;
