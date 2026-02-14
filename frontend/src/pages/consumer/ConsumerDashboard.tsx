@@ -396,7 +396,6 @@ const ConsumerDashboard: React.FC = () => {
           </Card>
         </div>
 
-        {/* Readings with Date Range Selection */}
         <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -518,7 +517,8 @@ const ConsumerDashboard: React.FC = () => {
                   <TableRow>
                     <TableHead>Date</TableHead>
                     <TableHead>Current Reading</TableHead>
-                    <TableHead>Previous Reading</TableHead>
+                    <TableHead>Previous Reading</TableHead> <div className="0">                      
+                    </div>
                     <TableHead>Consumption</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -528,7 +528,7 @@ const ConsumerDashboard: React.FC = () => {
                       (a, b) =>
                         new Date(b.readingDate).getTime() -
                         new Date(a.readingDate).getTime()).map((reading) => (
-                          <TableRow key={reading.id}>
+                          <TableRow key={reading._id}>
                             <TableCell>{format(parseISO(reading.readingDate), 'dd MMM yyyy')}</TableCell>
                             <TableCell className="font-medium">{reading.reading.toLocaleString()} L</TableCell>
                             <TableCell className="text-muted-foreground">{reading.previousReading.toLocaleString()} L</TableCell>
