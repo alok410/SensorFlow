@@ -7,9 +7,15 @@ import locationRoutes from './routes/location.routes.js'
 import secretaryRoutes from "./routes/secretary.routes.js";
 
 const app = express();
+// ✅ CORS MUST BE FIRST
+app.use(cors({
+  origin: ["http://localhost:8080"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  credentials: true
+}));
 
-// Middleware
-app.use(cors());
+// ✅ Explicitly handle preflight
+app.options("*", cors());
 app.use(express.json());
 
 // Routes
