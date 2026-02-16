@@ -9,11 +9,7 @@ import secretaryRoutes from "./routes/secretary.routes.js";
 const app = express();
 
 // Middleware
-app.use(cors({
-  origin: "http://localhost:8080", // frontend URL
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true
-}));
+app.use(cors());
 app.use(express.json());
 
 // Routes
