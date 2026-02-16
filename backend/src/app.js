@@ -8,10 +8,30 @@ import secretaryRoutes from "./routes/secretary.routes.js";
 
 const app = express();
 
-// Middleware
-app.use(cors());
-app.use(express.json());
 
+// ✅ Allow both frontend URLs
+const allowedOrigins = [
+  "http://localhost:8080",
+  "https://sensor-flow-kappa.vercel.app"
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true); // allow non-browser requests
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+}));
+
+// ✅ Handle preflight explicitly
+app.options("*", cors());
+app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use("/api/locations", locationRoutes);
