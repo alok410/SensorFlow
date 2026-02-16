@@ -7,30 +7,33 @@ import secretaryRoutes from "./routes/secretary.routes.js";
 
 const app = express();
 
+console.log("🔥 NEW DEPLOYMENT ACTIVE - CORS FIX APPLIED");
+
 // ✅ Allowed frontend domains
 const allowedOrigins = [
   "http://localhost:8080",
   "https://sensor-flow-kappa.vercel.app"
 ];
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
+// ✅ Manual CORS handler (Vercel-safe)
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
 
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      return callback(null, false);
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-};
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
 
-// ✅ USE SAME OPTIONS FOR EVERYTHING
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+
+  // ✅ Handle preflight request directly
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
+  next();
+});
 
 app.use(express.json());
 
@@ -40,7 +43,7 @@ app.use("/api/locations", locationRoutes);
 app.use("/api/secretaries", secretaryRoutes);
 
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'SensorFlow API running' });
+  res.json({ status: 'OK', message: 'SensorFlow API running - Updated' });
 });
 
 export default app;
