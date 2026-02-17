@@ -59,6 +59,9 @@ const AdminSecretaries = () => {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSecretary, setEditingSecretary] = useState<any>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+const [secretaryToDelete, setSecretaryToDelete] = useState<any>(null);
+
 
   const [formData, setFormData] = useState({
     name: "",
@@ -181,24 +184,29 @@ const loadLocations = async () => {
   };
 
   /* ================= DELETE ================= */
-  const handleDelete = async (secretary: any) => {
-    try {
-      await deleteSecretary(secretary._id);
+const confirmDelete = async () => {
+  if (!secretaryToDelete) return;
 
-      toast({
-        title: "Secretary Deleted",
-        description: "Secretary removed successfully",
-      });
+  try {
+    await deleteSecretary(secretaryToDelete._id);
 
-      await loadSecretaries();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Delete failed",
-        variant: "destructive",
-      });
-    }
-  };
+    toast({
+      title: "Secretary Deleted",
+      description: "Secretary removed successfully",
+    });
+
+    await loadSecretaries();
+    setIsDeleteDialogOpen(false);
+    setSecretaryToDelete(null);
+  } catch (error) {
+    toast({
+      title: "Error",
+      description: "Delete failed",
+      variant: "destructive",
+    });
+  }
+};
+
   
 
   return (
@@ -391,7 +399,11 @@ const loadLocations = async () => {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => handleDelete(s)}
+                       onClick={() => {
+  setSecretaryToDelete(s);
+  setIsDeleteDialogOpen(true);
+}}
+
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
@@ -403,6 +415,37 @@ const loadLocations = async () => {
           </CardContent>
         </Card>
       </div>
+      {/* ================= DELETE CONFIRMATION DIALOG ================= */}
+
+<Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Confirm Delete</DialogTitle>
+      <DialogDescription>
+        Are you sure you want to delete{" "}
+        <strong>{secretaryToDelete?.name}</strong>?
+        <br />
+        This action cannot be undone.
+      </DialogDescription>
+    </DialogHeader>
+
+    <DialogFooter>
+      <Button
+        variant="outline"
+        onClick={() => setIsDeleteDialogOpen(false)}
+      >
+        Cancel
+      </Button>
+
+      <Button
+        variant="destructive"
+        onClick={confirmDelete}
+      >
+        Delete
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
     </DashboardLayout>
   );
 };

@@ -42,7 +42,6 @@ export interface UserBase {
 export interface Consumer extends UserBase {
   role: "consumer";
   meterId: string;
-  accountType: AccountType;
   assignedSecretaryId?: string;
   connectionDate: string;
   locationId: string;       // required
