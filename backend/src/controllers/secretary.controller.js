@@ -38,15 +38,22 @@ export const getAllSecretaries = async (req, res) => {
   try {
     const secretaries = await User.find({ role: "secretary" })
       .select("-password")
-      .populate("locationId");
+      .sort({ createdAt: -1 });
 
-    res.json(secretaries);
-    console.log(secretaries);
-    
+    res.status(200).json({
+      success: true,
+      count: secretaries.length,
+      data: secretaries,
+    });
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
+
 
 
 /* ===============================
