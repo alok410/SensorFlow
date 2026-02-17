@@ -16,7 +16,6 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use("/api/locations", locationRoutes);
 app.use("/api/secretaries", secretaryRoutes);
-
 app.use("/api/consumers", consumerRoutes);
 // Health check
 app.get('/api/health', (req, res) => {
