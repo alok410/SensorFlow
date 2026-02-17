@@ -8,7 +8,7 @@ export const getMe = async (req, res) => {
 
     res.json({
       id: user._id,
-      name: user.name,
+      name: user.name,          
       email: user.email,
       role: user.role,
       phone: user.phone,

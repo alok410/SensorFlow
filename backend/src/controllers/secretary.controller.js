@@ -41,6 +41,8 @@ export const getAllSecretaries = async (req, res) => {
       .populate("locationId");
 
     res.json(secretaries);
+    console.log(secretaries);
+    
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
