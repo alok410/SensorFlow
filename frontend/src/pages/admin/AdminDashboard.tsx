@@ -1,11 +1,14 @@
 import React from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
+import { useEffect, useState } from "react";
+
 import { StatsCard } from '@/components/StatsCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getConsumers, getSecretaries, getInvoices, getPayments, getMeterReadings } from '@/lib/storage';
+import {  getInvoices, getPayments, getMeterReadings } from '@/lib/storage';
 import { Users, UserCheck, DollarSign, FileText, AlertTriangle, Droplets, TrendingUp, Activity } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-
+import {getConsumers} from "@/services/consumer.service";
+import {getAllSecretaries} from "@/services/secretary.service";
 const adminNavItems = [
   { label: 'Overview', href: '/admin' },
   { label: 'Users', href: '/admin/users' },
@@ -17,8 +20,44 @@ const adminNavItems = [
 ];
 
 const AdminDashboard: React.FC = () => {
-  const consumers = getConsumers();
-  const secretaries = getSecretaries();
+    const [consumers, setConsumers] = useState<any[]>([]);
+
+    const [secretaries, setSecretaries] = useState<any[]>([]);
+    const loadConsumers = async () => {
+    try {
+      const res = await getConsumers();
+
+      const array =
+        Array.isArray(res) ? res :
+        Array.isArray(res.data) ? res.data :
+        Array.isArray(res.data?.data) ? res.data.data :
+        [];
+
+      setConsumers(array);
+    } catch {
+      setConsumers([]);
+    }
+  };
+    const loadSecretaries = async () => {
+    try {
+      const res = await getAllSecretaries();
+  
+      const secretariesArray =
+        Array.isArray(res) ? res :
+        Array.isArray(res.data) ? res.data :
+        Array.isArray(res.data?.data) ? res.data.data :
+        [];
+  
+      setSecretaries(secretariesArray);
+    } catch (error) {
+      setSecretaries([]);
+    }
+  };
+  useEffect(() => {
+      loadSecretaries();
+      loadConsumers();
+    }, []);
+  
   const invoices = getInvoices();
   const payments = getPayments();
   const readings = getMeterReadings();
