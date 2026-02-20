@@ -74,9 +74,7 @@ useEffect(() => {
   };
 
   const demoAccounts = [
-    { email: 'admin@demo.com', role: 'Admin' },
-    { email: 'ahd.sec@demo.com', role: 'Secretary' },
-    { email: 'ahd.c2@demo.com', role: 'Consumer' },
+    { email: 'admin@demo.com', role: 'Admin' }
   ];
 
   return (
