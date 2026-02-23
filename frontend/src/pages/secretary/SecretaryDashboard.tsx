@@ -17,6 +17,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 const secretaryNavItems = [
   { label: 'Overview', href: '/secretary' },
+  { label: 'My Users', href: '/secretary/Users' },
+
 ];
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--muted))', 'hsl(var(--destructive))'];
@@ -133,7 +135,7 @@ const SecretaryDashboard: React.FC = () => {
 
     // Record payment transaction
     const payment = {
-      id: generateId(),
+      _id: generateId(),
       consumerId: selectedConsumer._id,
       amount,
       method: 'manual' as const,
@@ -292,11 +294,7 @@ const SecretaryDashboard: React.FC = () => {
                           <span className="font-medium">{(usage / 1000).toFixed(1)}K L</span>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant={consumer.accountType === 'prepaid' ? 'default' : 'secondary'}>
-                          {consumer.accountType}
-                        </Badge>
-                      </TableCell>
+                      
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Wallet className="h-4 w-4 text-success" />

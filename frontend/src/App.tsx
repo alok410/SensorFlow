@@ -17,6 +17,7 @@ import SecretaryDashboard from "./pages/secretary/SecretaryDashboard";
 import ConsumerDashboard from "./pages/consumer/ConsumerDashboard";
 import NotFound from "./pages/NotFound";
 import AdminLocations from "./pages/admin/AdminLocation";
+import SecretaryUsers from "./pages/secretary/SecretaryUsers";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ const App = () => (
             
             {/* Secretary Routes */}
             <Route path="/secretary" element={<ProtectedRoute allowedRoles={['secretary']}><SecretaryDashboard /></ProtectedRoute>} />
+            <Route path="/secretary/Users" element={<ProtectedRoute allowedRoles={['secretary']}><SecretaryUsers/></ProtectedRoute>} />
             
             {/* Consumer Routes */}
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['consumer']}><ConsumerDashboard /></ProtectedRoute>} />

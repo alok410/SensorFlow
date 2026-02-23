@@ -64,7 +64,7 @@ export const createConsumer = async (req, res) => {
 =================================*/
 export const getAllConsumers = async (req, res) => {
   try {
-    const consumers = await User.find({ role: "consumer" })
+    const consumers = await User.find({ role: "consumer", isActive: true })
       .select("-password")
       .sort({ createdAt: -1 });
 
@@ -127,12 +127,18 @@ export const updateConsumer = async (req, res) => {
 =================================*/
 export const deleteConsumer = async (req, res) => {
   try {
-    const deleted = await User.findOneAndDelete({
-      _id: req.params.id,
-      role: "consumer",
-    });
+    const updated = await User.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        role: "consumer",
+      },
+      {
+        $set: { isActive: false },
+      },
+      { new: true } // return updated document
+    );
 
-    if (!deleted) {
+    if (!updated) {
       return res.status(404).json({
         success: false,
         message: "Consumer not found",
@@ -141,7 +147,8 @@ export const deleteConsumer = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Consumer deleted successfully",
+      message: "Consumer deactivated successfully",
+      data: updated,
     });
 
   } catch (error) {

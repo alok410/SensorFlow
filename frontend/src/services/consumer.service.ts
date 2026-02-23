@@ -44,6 +44,8 @@ export const getConsumers = async () => {
   });
 
   return response.json();
+  console.log(response.json());
+  
 };
 
 
@@ -75,3 +77,4 @@ export const deleteConsumer = async (id: string) => {
 
   return response.json();
 };
+
