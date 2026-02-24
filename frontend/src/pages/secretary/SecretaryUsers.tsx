@@ -3,6 +3,7 @@ import { getConsumers } from "@/services/consumer.service";
 import { getAllSecretaries } from "@/services/secretary.service";
 import { useAuth } from "@/contexts/AuthContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { log } from "util";
 
 const secretaryNavItems = [
   { label: 'Overview', href: '/secretary' },
@@ -42,6 +43,8 @@ const SecretaryUsers: React.FC = () => {
 
         // ✅ Fetch 
         const consumersRes = await getConsumers();
+        console.log(consumersRes);
+        
         const consumersArray =
           Array.isArray(consumersRes) ? consumersRes :
           Array.isArray(consumersRes.data) ? consumersRes.data :

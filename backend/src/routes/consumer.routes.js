@@ -19,7 +19,7 @@ const router = express.Router();
 router.post("/", protect, authorize("admin"), createConsumer);
 
 // Get All Consumers
-router.get("/", protect, authorize("admin"), getAllConsumers);
+router.get("/", protect, authorize("admin" , "secretary"), getAllConsumers);
 
 // Update Consumer
 router.put("/:id", protect, authorize("admin"), updateConsumer);
