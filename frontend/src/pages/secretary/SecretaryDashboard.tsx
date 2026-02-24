@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { getConsumers } from '@/services/consumer.service';
@@ -16,6 +17,9 @@ import { Consumer } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Users, DollarSign, FileText, AlertTriangle, Wallet, Plus, Droplets, TrendingUp, BarChart3 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { getDailyConsumption } from "@/services/water.service";
+import { LineChart, Line } from "recharts";
+import { getLocations } from "@/services/location.service";
 
 const secretaryNavItems = [
   { label: 'Overview', href: '/secretary' },
@@ -26,7 +30,19 @@ const secretaryNavItems = [
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--muted))', 'hsl(var(--destructive))'];
 
 const SecretaryDashboard: React.FC = () => {
-  
+const [selectedUser, setSelectedUser] = useState<string>("all");
+const [dateFilter, setDateFilter] = useState<"7" | "15" | "30" | "custom">("7");
+const [startDate, setStartDate] = useState("");
+const [endDate, setEndDate] = useState("");
+const [locations, setLocations] = useState<any[]>([]);
+const [secretaryLocationName, setSecretaryLocationName] = useState<string>("");
+
+
+
+const [dailyConsumptionByDate, setDailyConsumptionByDate] = useState<any[]>([]);
+const [dailyConsumptionByMeter, setDailyConsumptionByMeter] = useState<any[]>([]);
+
+const [loadingWater, setLoadingWater] = useState(false);
   const [allConsumers, setAllConsumers] = useState<Consumer[]>([]);
 const [secretaryLocationId, setSecretaryLocationId] = useState<string | null>(null);
 const [loading, setLoading] = useState(true);
@@ -67,9 +83,29 @@ const [loading, setLoading] = useState(true);
         (s: any) => s._id === user.id
       );
 
-      if (loggedSecretary) {
-        setSecretaryLocationId(loggedSecretary.locationId);
-      }
+    if (loggedSecretary) {
+  setSecretaryLocationId(loggedSecretary.locationId);
+
+  // ✅ Fetch Locations
+  const locationsRes = await getLocations();
+
+  const locationsArray =
+    Array.isArray(locationsRes) ? locationsRes :
+    Array.isArray(locationsRes.data) ? locationsRes.data :
+    Array.isArray(locationsRes.data?.data) ? locationsRes.data.data :
+    [];
+
+  setLocations(locationsArray);
+
+  const matchedLocation = locationsArray.find(
+    (loc: any) =>
+      loc._id?.toString() === loggedSecretary.locationId?.toString()
+  );
+
+  if (matchedLocation) {
+    setSecretaryLocationName(matchedLocation.name);
+  }
+}
 
     } catch (error) {
       console.error("Dashboard loading error:", error);
@@ -80,12 +116,164 @@ const [loading, setLoading] = useState(true);
 
   loadData();
 }, [user]);
-  const assignedConsumers = allConsumers.filter(
-  (c) =>
-    c.locationId?.toString() === secretaryLocationId?.toString()
-);
+
+  const assignedConsumers = useMemo(() => {
+  return allConsumers.filter(
+    (c) =>
+      c.locationId?.toString() === secretaryLocationId?.toString()
+  );
+}, [allConsumers, secretaryLocationId]);
+
   const assignedConsumerIds = assignedConsumers.map(c => c._id);
-  
+  const getDateRange = () => {
+  const today = new Date();
+  let start = new Date();
+
+  if (dateFilter === "7") start.setDate(today.getDate() - 7);
+  if (dateFilter === "15") start.setDate(today.getDate() - 15);
+  if (dateFilter === "30") start.setDate(today.getDate() - 30);
+
+  if (dateFilter === "custom" && startDate && endDate) {
+    return { start: startDate, end: endDate };
+  }
+
+  return {
+    start: start.toISOString().split("T")[0],
+    end: today.toISOString().split("T")[0],
+  };
+};
+
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      setLoadingWater(true);
+
+      if (!assignedConsumers.length) {
+        setDailyConsumptionByDate([]);
+        setDailyConsumptionByMeter([]);
+        return;
+      }
+
+      const today = new Date();
+      let startDateObj = new Date();
+
+      if (dateFilter === "7") startDateObj.setDate(today.getDate() - 7);
+      if (dateFilter === "15") startDateObj.setDate(today.getDate() - 15);
+      if (dateFilter === "30") startDateObj.setDate(today.getDate() - 30);
+
+      let start =
+        dateFilter === "custom" && startDate
+          ? `${startDate}T00:00:00`
+          : startDateObj.toISOString();
+
+      let end =
+        dateFilter === "custom" && endDate
+          ? `${endDate}T23:59:59`
+          : today.toISOString();
+
+      const filteredConsumers =
+        selectedUser === "all"
+          ? assignedConsumers
+          : assignedConsumers.filter(
+              (c) => c._id?.toString() === selectedUser
+            );
+
+      const meterIds = filteredConsumers
+        .map((c) => c.meterId)
+        .filter((id) => id && id.trim() !== "");
+
+      if (!meterIds.length) {
+        setDailyConsumptionByDate([]);
+        setDailyConsumptionByMeter([]);
+        return;
+      }
+
+      const groupedByDate: Record<string, number> = {};
+      const groupedByMeter: Record<string, number> = {};
+
+      await Promise.all(
+        meterIds.map(async (deviceId) => {
+          try {
+            const response = await getDailyConsumption(
+              deviceId,
+              start,
+              end
+            );
+
+            const dailyArray =
+              Array.isArray(response)
+                ? response
+                : Array.isArray(response?.data)
+                ? response.data
+                : [];
+
+            dailyArray.forEach((item: any) => {
+              const date =
+                item.reading_date ||
+                item.date ||
+                item.readingDate;
+
+              const value = Number(
+                item.consumption ||
+                item.total_consumption ||
+                item.value ||
+                0
+              );
+
+              if (!date) return;
+
+              // 🔹 Line Chart (group by date)
+              if (!groupedByDate[date]) groupedByDate[date] = 0;
+              groupedByDate[date] += value;
+
+              // 🔹 Bar Chart (group by meter)
+              if (!groupedByMeter[deviceId]) groupedByMeter[deviceId] = 0;
+              groupedByMeter[deviceId] += value;
+            });
+
+          } catch (err) {
+            console.error("Meter fetch failed:", deviceId, err);
+          }
+        })
+      );
+
+      const mergedByDate = Object.keys(groupedByDate)
+        .sort()
+        .map((date) => ({
+          reading_date: date,
+          consumption: groupedByDate[date],
+        }));
+
+      const mergedByMeter = Object.keys(groupedByMeter).map((meterId) => ({
+        meterId,
+        consumption: groupedByMeter[meterId],
+      }));
+
+      setDailyConsumptionByDate(mergedByDate);
+      setDailyConsumptionByMeter(mergedByMeter);
+
+    } catch (err) {
+      console.error("Water fetch error:", err);
+      setDailyConsumptionByDate([]);
+      setDailyConsumptionByMeter([]);
+    } finally {
+      setLoadingWater(false);
+    }
+  };
+
+  fetchData();
+}, [selectedUser, dateFilter, startDate, endDate, assignedConsumers]);
+
+
+
+const totalWaterConsumption = dailyConsumptionByDate.reduce(
+  (s, d) => s + (Number(d.consumption || 0) * 1000), 
+  0
+);
+const consumptionChartData = dailyConsumptionByDate.map((d) => ({
+  date: d.reading_date,
+  consumption: Number(d.consumption || 0) * 1000, // convert to liters
+}));
   const assignedInvoices = invoices.filter(inv => assignedConsumerIds.includes(inv.consumerId));
   const assignedReadings = meterReadings.filter(r => assignedConsumerIds.includes(r.consumerId));
   
@@ -207,6 +395,29 @@ const [loading, setLoading] = useState(true);
     setRefreshKey(prev => prev + 1);
   };
   
+const formatLiters = (value: number) => {
+  if (value >= 1000000) return (value / 1000000).toFixed(2) + " ML";
+  if (value >= 1000) return (value / 1000).toFixed(2) + "L";
+  return value.toFixed(0) + " L";
+};
+
+const top5UsageData = dailyConsumptionByMeter
+  .map((d) => {
+    const consumer = assignedConsumers.find(
+      (c) => c.meterId === d.meterId
+    );
+
+    return {
+      name: consumer?.name.split(" ")[0] || "Unknown",
+      usage: Number(d.consumption || 0) * 1000,
+    };
+  })
+  .filter((u) => u.usage > 0)
+  .sort((a, b) => b.usage - a.usage)
+  .slice(0, 5);
+
+
+console.log("Top 5 Usage Data:", top5UsageData);
 
   return (
     <DashboardLayout navItems={secretaryNavItems} title="Secretary Dashboard">
@@ -217,51 +428,135 @@ const [loading, setLoading] = useState(true);
 ) : (
     <div className="space-y-6 animate-fade-in" key={refreshKey}>
         <div>
-          <h1 className="text-3xl font-display font-bold">Welcome, {user?.name}</h1>
+        <h1 className="text-3xl font-display font-bold">
+  Welcome, {user?.name} -  {secretaryLocationName}
+</h1>``
           <p className="text-muted-foreground mt-1">Manage your assigned consumers and monitor water usage</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-5">
           <StatsCard title="Assigned Consumers" value={assignedConsumers.length} icon={Users} variant="primary" />
-          <StatsCard title="Total Usage" value={`${(totalConsumption / 1000).toFixed(1)}K L`} icon={Droplets} variant="default" />
+       <StatsCard
+  title="Total Usage (Filtered)"
+  value={formatLiters(totalWaterConsumption)}
+  icon={Droplets}
+  variant="default"
+/>
           <StatsCard title="Avg Usage/User" value={`${(avgConsumptionPerUser / 1000).toFixed(1)}K L`} icon={TrendingUp} variant="default" />
           <StatsCard title="Pending Invoices" value={pendingInvoices} icon={FileText} variant="warning" />
           <StatsCard title="Total Outstanding" value={`$${totalOutstanding.toFixed(2)}`} icon={DollarSign} variant="destructive" />
         </div>
+<Card className="mb-6">
+  <CardContent className="p-6 grid md:grid-cols-3 gap-4">
 
+    {/* USER FILTER */}
+    <div>
+      <label className="text-sm font-medium mb-1 block">User</label>
+      <select
+        value={selectedUser}
+        onChange={(e) => setSelectedUser(e.target.value)}
+        className="w-full border rounded-md px-3 py-2"
+      >
+        <option value="all">All Users</option>
+        {assignedConsumers.map((u) => (
+          <option key={u._id} value={u._id}>
+            {u.name}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    {/* DATE FILTER */}
+    <div className="md:col-span-2">
+      <label className="text-sm font-medium mb-2 block">
+        Date Range
+      </label>
+
+      <div className="flex flex-wrap gap-2">
+        {["7", "15", "30"].map((d) => (
+          <button
+            key={d}
+            onClick={() => setDateFilter(d as any)}
+            className={`px-4 py-2 text-sm rounded-full ${
+              dateFilter === d
+                ? "bg-primary text-white"
+                : "bg-white border"
+            }`}
+          >
+            Last {d} Days
+          </button>
+        ))}
+
+        <button
+          onClick={() => setDateFilter("custom")}
+          className={`px-4 py-2 text-sm rounded-full ${
+            dateFilter === "custom"
+              ? "bg-primary text-white"
+              : "bg-white border"
+          }`}
+        >
+          Custom
+        </button>
+
+        {dateFilter === "custom" && (
+          <div className="flex gap-2">
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="border rounded px-2 py-1"
+            />
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="border rounded px-2 py-1"
+            />
+          </div>
+        )}
+      </div>
+    </div>
+
+  </CardContent>
+</Card>
         {/* Water Usage Analytics Section */}
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-primary" />
-                Top Consumer Usage
-              </CardTitle>
-              <CardDescription>Water consumption by assigned consumers (Liters)</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                {consumerUsageData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={consumerUsageData} layout="vertical" margin={{ left: 20, right: 20 }}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis type="number" tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} />
-                      <YAxis dataKey="name" type="category" width={60} />
-                      <Tooltip 
-                        formatter={(value: number) => [`${value.toLocaleString()} L`, 'Consumption']}
-                        contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
-                      />
-                      <Bar dataKey="consumption" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-full flex items-center justify-center text-muted-foreground">
-                    No usage data available
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+  <CardHeader>
+    <CardTitle>Water Consumption Trend</CardTitle>
+    <CardDescription>
+      Based on selected user & date range
+    </CardDescription>
+  </CardHeader>
+
+  <CardContent>
+    {loadingWater ? (
+      <div className="h-[300px] flex items-center justify-center">
+        Loading data...
+      </div>
+    ) : (
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={consumptionChartData}>
+          <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+        <XAxis
+  dataKey="date"
+  tick={{ fontSize: 12 }}
+  angle={-45}
+  textAnchor="end"
+/>
+          <YAxis />
+          <Tooltip />
+          <Line
+            type="monotone"
+            dataKey="consumption"
+            stroke="#2563eb"
+            strokeWidth={3}
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    )}
+  </CardContent>
+</Card>
 
           <Card>
             <CardHeader>
@@ -311,6 +606,55 @@ const [loading, setLoading] = useState(true);
               </div>
             </CardContent>
           </Card>
+
+<Card>
+  <CardHeader>
+    <CardTitle className="flex items-center gap-2">
+      <BarChart3 className="h-5 w-5 text-primary" />
+      Top 5 Users by Usage (Liters)
+    </CardTitle>
+    <CardDescription>
+      Water consumption comparison in Liters
+    </CardDescription>
+  </CardHeader>
+
+  <CardContent>
+    <div className="h-[300px]">
+      {top5UsageData.length > 0 ? (
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={top5UsageData}>
+            <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+            
+            <XAxis dataKey="name" />
+
+            <YAxis
+              tickFormatter={(value) => value.toLocaleString()}
+            />
+
+            <Tooltip
+              formatter={(value: number) => [
+                `${value.toLocaleString()} L`,
+                "Usage",
+              ]}
+            />
+
+            <Bar
+              dataKey="usage"
+              fill="#2563eb"
+              radius={[8, 8, 0, 0]}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="h-full flex items-center justify-center text-muted-foreground">
+          No usage data available
+        </div>
+      )}
+    </div>
+  </CardContent>
+</Card>
+
+          
         </div>
 
         <Card>
@@ -346,7 +690,9 @@ const [loading, setLoading] = useState(true);
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Droplets className="h-4 w-4 text-primary" />
-                          <span className="font-medium">{(usage / 1000).toFixed(1)}K L</span>
+                          <span className="font-medium">
+                              {formatLiters(usage * 1000)}
+                                </span>
                         </div>
                       </TableCell>
                       
