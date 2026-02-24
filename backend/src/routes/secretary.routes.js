@@ -14,7 +14,7 @@ const router = express.Router();
 
 /* ADMIN ROUTES */
 router.post("/", protect, authorize("admin"), createSecretary);
-router.get("/", protect, authorize("admin"), getAllSecretaries);
+router.get("/", protect, authorize("admin","secretary"), getAllSecretaries);
 router.put("/:id", protect, authorize("admin"), updateSecretary);
 router.delete("/:id", protect, authorize("admin"), deleteSecretary);
 
