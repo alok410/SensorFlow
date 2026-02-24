@@ -43,7 +43,7 @@ const SecretaryUsers: React.FC = () => {
 
         // ✅ Fetch 
         const consumersRes = await getConsumers();
-        console.log(consumersRes);
+
         
         const consumersArray =
           Array.isArray(consumersRes) ? consumersRes :
@@ -52,18 +52,20 @@ const SecretaryUsers: React.FC = () => {
           [];
 
         setAllConsumers(consumersArray);
-
+        
+        
         const secretariesRes = await getAllSecretaries();
         const secretariesArray =
-          Array.isArray(secretariesRes) ? secretariesRes :
-          Array.isArray(secretariesRes.data) ? secretariesRes.data :
-          Array.isArray(secretariesRes.data?.data) ? secretariesRes.data.data :
-          [];
-
+        Array.isArray(secretariesRes) ? secretariesRes :
+        Array.isArray(secretariesRes.data) ? secretariesRes.data :
+        Array.isArray(secretariesRes.data?.data) ? secretariesRes.data.data :
+        [];
+        
+        
         const loggedSecretary = secretariesArray.find(
-          (s: Secretary) => s.userId === user.id
+          (s: Secretary) => s._id === user.id
         );
-
+        
         if (loggedSecretary) {
           setSecretaryLocationId(loggedSecretary.locationId);
         }
@@ -84,50 +86,59 @@ const SecretaryUsers: React.FC = () => {
       c.locationId?.toString() === secretaryLocationId?.toString()
   );
 
-  if (loading) {
-    return <div className="p-4">Loading users...</div>;
-  }
+ 
 
-  return (
-        <DashboardLayout navItems={secretaryNavItems} title="Secretary Dashboard">
-      <div className="space-y-6 animate-fade-in" key={refreshKey}>
+ return (
+  <DashboardLayout navItems={secretaryNavItems} title="Secretary Dashboard">
+    <div className="space-y-6 animate-fade-in" key={refreshKey}>
+      <div className="p-6">
 
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Location Consumers</h2>
+        <h2 className="text-2xl font-bold mb-6">Location Consumers</h2>
 
-      {assignedConsumers.length === 0 ? (
-        <p>No users found for your location.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full border border-gray-200">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="p-3 border">Name</th>
-                <th className="p-3 border">Email</th>
-                <th className="p-3 border">Phone</th>
-                <th className="p-3 border">Address</th>
-                <th className="p-3 border">Meter ID</th>
-              </tr>
-            </thead>
-            <tbody>
-              {assignedConsumers.map((consumer) => (
-                <tr key={consumer._id} className="text-center">
-                  <td className="p-3 border">{consumer.name}</td>
-                  <td className="p-3 border">{consumer.email}</td>
-                  <td className="p-3 border">{consumer.phone || "-"}</td>
-                  <td className="p-3 border">{consumer.address || "-"}</td>
-                  <td className="p-3 border">{consumer.meterId || "-"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-
+        {loading ? (
+          <div className="flex justify-center items-center h-40">
+            <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-blue-500"></div>
           </div>
-    </DashboardLayout>
-  );
+        ) : assignedConsumers.length === 0 ? (
+          <div className="text-center py-10 text-gray-500">
+            No users found for your location.
+          </div>
+        ) : (
+          <div className="overflow-x-auto bg-white shadow-lg rounded-xl">
+            <table className="min-w-full text-sm text-left text-gray-600">
+              <thead className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                <tr>
+                  <th className="px-6 py-3">Name</th>
+                  <th className="px-6 py-3">Email</th>
+                  <th className="px-6 py-3">Meter ID</th>
+                </tr>
+              </thead>
+              <tbody>
+                {assignedConsumers.map((consumer, index) => (
+                  <tr
+                    key={consumer._id}
+                    className={`border-b hover:bg-blue-50 transition ${
+                      index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                    }`}
+                  >
+                    <td className="px-6 py-3 font-medium text-gray-800">
+                      {consumer.name}
+                    </td>
+                    <td className="px-6 py-3">{consumer.email}</td>
+                    <td className="px-6 py-3 font-semibold text-blue-600">
+                      {consumer.meterId || "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+      </div>
+    </div>
+  </DashboardLayout>
+);
 
 };
 

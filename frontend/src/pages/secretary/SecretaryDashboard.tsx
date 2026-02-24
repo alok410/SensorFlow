@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { StatsCard } from '@/components/StatsCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { getConsumers, getInvoices, getPrepaidBalances, setPrepaidBalances, getPayments, setPayments, generateId, getMeterReadings, getWaterRates } from '@/lib/storage';
+import { getConsumers } from '@/services/consumer.service';
+import { getAllSecretaries } from '@/services/secretary.service';
+import { getInvoices, getPrepaidBalances, setPrepaidBalances, getPayments, setPayments, generateId, getMeterReadings, getWaterRates } from '@/lib/storage';
 import { Consumer } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Users, DollarSign, FileText, AlertTriangle, Wallet, Plus, Droplets, TrendingUp, BarChart3 } from 'lucide-react';
@@ -24,17 +26,64 @@ const secretaryNavItems = [
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--muted))', 'hsl(var(--destructive))'];
 
 const SecretaryDashboard: React.FC = () => {
+  
+  const [allConsumers, setAllConsumers] = useState<Consumer[]>([]);
+const [secretaryLocationId, setSecretaryLocationId] = useState<string | null>(null);
+const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
   const [refreshKey, setRefreshKey] = useState(0);
   
-  const allConsumers = getConsumers();
   const invoices = getInvoices();
   const prepaidBalances = getPrepaidBalances();
   const meterReadings = getMeterReadings();
   const waterRates = getWaterRates();
-  
-  const assignedConsumers = allConsumers.filter(c => c.assignedSecretaryId === user?.id);
+  useEffect(() => {
+  const loadData = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+
+      // Fetch consumers
+      const consumersRes = await getConsumers();
+      const consumersArray =
+        Array.isArray(consumersRes) ? consumersRes :
+        Array.isArray(consumersRes.data) ? consumersRes.data :
+        Array.isArray(consumersRes.data?.data) ? consumersRes.data.data :
+        [];
+
+      setAllConsumers(consumersArray);
+
+      // Fetch secretaries
+      const secretariesRes = await getAllSecretaries();
+      const secretariesArray =
+        Array.isArray(secretariesRes) ? secretariesRes :
+        Array.isArray(secretariesRes.data) ? secretariesRes.data :
+        Array.isArray(secretariesRes.data?.data) ? secretariesRes.data.data :
+        [];
+
+      const loggedSecretary = secretariesArray.find(
+        (s: any) => s._id === user.id
+      );
+
+      if (loggedSecretary) {
+        setSecretaryLocationId(loggedSecretary.locationId);
+      }
+
+    } catch (error) {
+      console.error("Dashboard loading error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  loadData();
+}, [user]);
+  const assignedConsumers = allConsumers.filter(
+  (c) =>
+    c.locationId?.toString() === secretaryLocationId?.toString()
+);
   const assignedConsumerIds = assignedConsumers.map(c => c._id);
   
   const assignedInvoices = invoices.filter(inv => assignedConsumerIds.includes(inv.consumerId));
@@ -157,10 +206,16 @@ const SecretaryDashboard: React.FC = () => {
     setCashAmount('');
     setRefreshKey(prev => prev + 1);
   };
+  
 
   return (
     <DashboardLayout navItems={secretaryNavItems} title="Secretary Dashboard">
-      <div className="space-y-6 animate-fade-in" key={refreshKey}>
+      {loading ? (
+  <div className="flex justify-center items-center h-60">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-primary"></div>
+  </div>
+) : (
+    <div className="space-y-6 animate-fade-in" key={refreshKey}>
         <div>
           <h1 className="text-3xl font-display font-bold">Welcome, {user?.name}</h1>
           <p className="text-muted-foreground mt-1">Manage your assigned consumers and monitor water usage</p>
@@ -370,6 +425,8 @@ const SecretaryDashboard: React.FC = () => {
           </DialogContent>
         </Dialog>
       </div>
+)}
+      
     </DashboardLayout>
   );
 };
