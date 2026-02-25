@@ -79,13 +79,16 @@ export const updateSecretary = async (req, res) => {
   try {
     delete req.body.role; // prevent role change
 
-    if (req.body.password) {
+    // ✅ If password is empty, remove it completely
+    if (!req.body.password || req.body.password.trim() === "") {
+      delete req.body.password;
+    } else {
       req.body.password = await bcrypt.hash(req.body.password, 10);
     }
 
     const updated = await User.findOneAndUpdate(
       { _id: req.params.id, role: "secretary" },
-      req.body,
+      { $set: req.body },   // ✅ safer
       { new: true }
     ).select("-password");
 
@@ -98,7 +101,6 @@ export const updateSecretary = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 /* ===============================
    ADMIN: DELETE SECRETARY
