@@ -54,14 +54,16 @@ const AdminSecretaries = () => {
 
   const [secretaries, setSecretaries] = useState<any[]>([]);
   const [locations, setLocations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [locationFilter, setLocationFilter] = useState<string | "all">("all");
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSecretary, setEditingSecretary] = useState<any>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-const [secretaryToDelete, setSecretaryToDelete] = useState<any>(null);
 
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [secretaryToDelete, setSecretaryToDelete] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -71,46 +73,48 @@ const [secretaryToDelete, setSecretaryToDelete] = useState<any>(null);
     password: "",
   });
 
-  /* ================= LOAD SECRETARIES ================= */
+  /* ================= LOAD DATA ================= */
+
+  const extractArray = (res: any) => {
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res?.data)) return res.data;
+    if (Array.isArray(res?.data?.data)) return res.data.data;
+    return [];
+  };
+
   const loadSecretaries = async () => {
-  try {
-    const res = await getAllSecretaries();
+    try {
+      const res = await getAllSecretaries();
+      setSecretaries(extractArray(res));
+    } catch {
+      setSecretaries([]);
+    }
+  };
 
-    const secretariesArray =
-      Array.isArray(res) ? res :
-      Array.isArray(res.data) ? res.data :
-      Array.isArray(res.data?.data) ? res.data.data :
-      [];
+  const loadLocations = async () => {
+    try {
+      const res = await getLocations();
+      setLocations(extractArray(res));
+    } catch {
+      setLocations([]);
+    }
+  };
 
-    setSecretaries(secretariesArray);
-  } catch (error) {
-    setSecretaries([]);
-  }
-};
-
-
-  /* ================= LOAD LOCATIONS ================= */
-const loadLocations = async () => {
-  try {
-    const res = await getLocations();
-
-    const locationsArray =
-      Array.isArray(res) ? res :
-      Array.isArray(res.data) ? res.data :
-      Array.isArray(res.data?.data) ? res.data.data :
-      [];
-
-    setLocations(locationsArray);
-  } catch (error) {
-    setLocations([]);
-  }
-};
   useEffect(() => {
-    loadSecretaries();
-    loadLocations();
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        await Promise.all([loadSecretaries(), loadLocations()]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, []);
 
   /* ================= FILTER ================= */
+
   const filteredSecretaries = secretaries.filter((s) => {
     const matchesSearch =
       s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -122,7 +126,8 @@ const loadLocations = async () => {
     return matchesSearch && matchesLocation;
   });
 
-  /* ================= RESET FORM ================= */
+  /* ================= FORM ================= */
+
   const resetForm = () => {
     setFormData({
       name: "",
@@ -150,21 +155,18 @@ const loadLocations = async () => {
     setIsDialogOpen(true);
   };
 
-  /* ================= CREATE / UPDATE ================= */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
       if (editingSecretary) {
         await updateSecretary(editingSecretary._id, formData);
-
         toast({
           title: "Secretary Updated",
           description: "Secretary updated successfully",
         });
       } else {
         await createSecretary(formData);
-
         toast({
           title: "Secretary Created",
           description: "Secretary added successfully",
@@ -174,7 +176,7 @@ const loadLocations = async () => {
       await loadSecretaries();
       setIsDialogOpen(false);
       resetForm();
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Operation failed",
@@ -183,37 +185,34 @@ const loadLocations = async () => {
     }
   };
 
-  /* ================= DELETE ================= */
-const confirmDelete = async () => {
-  if (!secretaryToDelete) return;
+  const confirmDelete = async () => {
+    if (!secretaryToDelete) return;
 
-  try {
-    await deleteSecretary(secretaryToDelete._id);
+    try {
+      await deleteSecretary(secretaryToDelete._id);
 
-    toast({
-      title: "Secretary Deleted",
-      description: "Secretary removed successfully",
-    });
+      toast({
+        title: "Secretary Deleted",
+        description: "Secretary removed successfully",
+      });
 
-    await loadSecretaries();
-    setIsDeleteDialogOpen(false);
-    setSecretaryToDelete(null);
-  } catch (error) {
-    toast({
-      title: "Error",
-      description: "Delete failed",
-      variant: "destructive",
-    });
-  }
-};
-
-  
+      await loadSecretaries();
+      setIsDeleteDialogOpen(false);
+      setSecretaryToDelete(null);
+    } catch {
+      toast({
+        title: "Error",
+        description: "Delete failed",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
-    <DashboardLayout navItems={adminNavItems} title="Admin Dashboard">
+    <DashboardLayout navItems={adminNavItems} title="Secretary Management">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Secretary Management</h1>
 
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -301,151 +300,158 @@ const confirmDelete = async () => {
             </DialogContent>
           </Dialog>
         </div>
-{/* ================= LOCATION CARDS ================= */}
 
-<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-    <Card
-    className={`cursor-pointer transition ${
-      locationFilter === "all" ? "ring-2 ring-primary" : ""
-    }`}
-    onClick={() => setLocationFilter("all")}
-  >
-    <CardContent className="p-4 flex justify-between items-center">
-      <div>
-        <p className="font-semibold">All Locations</p>
-        <p className="text-sm text-muted-foreground">
-          {secretaries.length} Secretaries
-        </p>
-      </div>
-      <Badge>{secretaries.length}</Badge>
-    </CardContent>
-  </Card>
+        {/* Loading Spinner */}
+        {loading ? (
+          <div className="flex justify-center items-center h-40">
+            <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-blue-500"></div>
+          </div>
+        ) : (
+          <>
+            {/* Location Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card
+                className={`cursor-pointer ${
+                  locationFilter === "all" ? "ring-2 ring-primary" : ""
+                }`}
+                onClick={() => setLocationFilter("all")}
+              >
+                <CardContent className="p-4 flex justify-between items-center">
+                  <div>
+                    <p className="font-semibold">All Locations</p>
+                    <p className="text-sm text-muted-foreground">
+                      {secretaries.length} Secretaries
+                    </p>
+                  </div>
+                  <Badge>{secretaries.length}</Badge>
+                </CardContent>
+              </Card>
 
-  {Array.isArray(locations) &&
-    locations.map((loc) => {
-      const count = secretaries.filter(
-        (s) => s.locationId === loc._id
-      ).length;
+              {locations.map((loc) => {
+                const count = secretaries.filter(
+                  (s) => s.locationId === loc._id
+                ).length;
 
-      const isActive = locationFilter === loc._id;
-
-      return (
-        <Card
-          key={loc._id}
-          className={`cursor-pointer transition ${
-            isActive ? "ring-2 ring-primary" : ""
-          }`}
-          onClick={() =>
-            setLocationFilter(
-              locationFilter === loc._id ? "all" : loc._id
-            )
-          }
-        >
-          <CardContent className="p-4 flex justify-between items-center">
-            <div>
-              <p className="font-semibold">{loc.name}</p>
-              <p className="text-sm text-muted-foreground">
-                {count} Secretaries
-              </p>
+                return (
+                  <Card
+                    key={loc._id}
+                    className={`cursor-pointer ${
+                      locationFilter === loc._id
+                        ? "ring-2 ring-primary"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      setLocationFilter(
+                        locationFilter === loc._id ? "all" : loc._id
+                      )
+                    }
+                  >
+                    <CardContent className="p-4 flex justify-between items-center">
+                      <div>
+                        <p className="font-semibold">{loc.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {count} Secretaries
+                        </p>
+                      </div>
+                      <Badge>{count}</Badge>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
-            <Badge>{count}</Badge>
-          </CardContent>
-        </Card>
-      );
-    })}
-</div>
 
-        {/* Table */}
-        <Card>
-          <CardHeader>
-            <Input
-              placeholder="Search secretaries..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </CardHeader>
+            {/* Table */}
+            <Card>
+              <CardHeader>
+                <Input
+                  placeholder="Search secretaries..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </CardHeader>
 
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead />
+                    </TableRow>
+                  </TableHeader>
 
-              <TableBody>
-                {filteredSecretaries.map((s) => (
-                  <TableRow key={s._id}>
-                    <TableCell>{s.name}</TableCell>
-                    <TableCell>{s.email}</TableCell>
-                    <TableCell>
-                      {locations.find((l) => l._id === s.locationId)?.name}
-                    </TableCell>
-                    <TableCell>
-                      <Badge>{s.isActive ? "Active" : "Inactive"}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleOpenDialog(s)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                       onClick={() => {
-  setSecretaryToDelete(s);
-  setIsDeleteDialogOpen(true);
-}}
-
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                  <TableBody>
+                    {filteredSecretaries.map((s) => (
+                      <TableRow key={s._id}>
+                        <TableCell>{s.name}</TableCell>
+                        <TableCell>{s.email}</TableCell>
+                        <TableCell>
+                          {locations.find(
+                            (l) => l._id === s.locationId
+                          )?.name}
+                        </TableCell>
+                        <TableCell>
+                          <Badge>
+                            {s.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleOpenDialog(s)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setSecretaryToDelete(s);
+                              setIsDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
-      {/* ================= DELETE CONFIRMATION DIALOG ================= */}
 
-<Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-  <DialogContent>
-    <DialogHeader>
-      <DialogTitle>Confirm Delete</DialogTitle>
-      <DialogDescription>
-        Are you sure you want to delete{" "}
-        <strong>{secretaryToDelete?.name}</strong>?
-        <br />
-        This action cannot be undone.
-      </DialogDescription>
-    </DialogHeader>
+      {/* Delete Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Delete</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete{" "}
+              <strong>{secretaryToDelete?.name}</strong>?
+              <br />
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
 
-    <DialogFooter>
-      <Button
-        variant="outline"
-        onClick={() => setIsDeleteDialogOpen(false)}
-      >
-        Cancel
-      </Button>
-
-      <Button
-        variant="destructive"
-        onClick={confirmDelete}
-      >
-        Delete
-      </Button>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };

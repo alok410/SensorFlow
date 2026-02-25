@@ -43,13 +43,13 @@ const adminNavItems = [
   { label: "Rates", href: "/admin/rates" },
   { label: "Invoices", href: "/admin/invoices" },
   { label: "Locations", href: "/admin/locations" },
-
 ];
 
 const AdminLocations: React.FC = () => {
   const { toast } = useToast();
 
   const [locations, setLocations] = useState<Location[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
 
@@ -60,19 +60,31 @@ const AdminLocations: React.FC = () => {
   });
 
   /* ======================
+      SAFE ARRAY EXTRACTOR
+  ====================== */
+  const extractArray = (res: any) => {
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res?.data)) return res.data;
+    if (Array.isArray(res?.data?.data)) return res.data.data;
+    return [];
+  };
+
+  /* ======================
       LOAD LOCATIONS
   ====================== */
-
   const loadLocations = async () => {
     try {
+      setLoading(true);
       const res = await getLocations();
-      setLocations(res.data.data || []);
+      setLocations(extractArray(res));
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to load locations",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -83,7 +95,6 @@ const AdminLocations: React.FC = () => {
   /* ======================
         HELPERS
   ====================== */
-
   const resetForm = () => {
     setFormData({ code: "", name: "", isActive: true });
     setEditingLocation(null);
@@ -106,7 +117,6 @@ const AdminLocations: React.FC = () => {
   /* ======================
      CREATE / UPDATE
   ====================== */
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -131,7 +141,7 @@ const AdminLocations: React.FC = () => {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.response?.data?.message || "Operation failed",
+        description: error?.response?.data?.message || "Operation failed",
         variant: "destructive",
       });
     }
@@ -140,9 +150,8 @@ const AdminLocations: React.FC = () => {
   /* ======================
           DELETE
   ====================== */
-
   const handleDelete = async (location: Location) => {
-    if (!confirm("Are you sure you want to delete this location?")) return;
+    if (!window.confirm("Are you sure you want to delete this location?")) return;
 
     try {
       await deleteLocation(location._id);
@@ -164,7 +173,6 @@ const AdminLocations: React.FC = () => {
   /* ======================
            RENDER
   ====================== */
-
   return (
     <DashboardLayout navItems={adminNavItems} title="Admin Dashboard">
       <div className="space-y-6">
@@ -223,46 +231,57 @@ const AdminLocations: React.FC = () => {
         <Card>
           <CardHeader />
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right" />
-                </TableRow>
-              </TableHeader>
-
-              <TableBody>
-                {locations.map((loc) => (
-                  <TableRow key={loc._id}>
-                    <TableCell>{loc.code}</TableCell>
-                    <TableCell>{loc.name}</TableCell>
-                    <TableCell>
-                      <Badge>
-                        {loc.isActive ? "Active" : "Inactive"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => openDialog(loc)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDelete(loc)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </TableCell>
+            {loading ? (
+              
+          <div className="flex justify-center items-center h-40">
+            <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-blue-500"></div>
+          </div>
+            ) : locations.length === 0 ? (
+              <p className="text-center py-6 text-muted-foreground">
+                No locations found
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Code</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right" />
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+
+                <TableBody>
+                  {locations.map((loc) => (
+                    <TableRow key={loc._id}>
+                      <TableCell>{loc.code}</TableCell>
+                      <TableCell>{loc.name}</TableCell>
+                      <TableCell>
+                        <Badge variant={loc.isActive ? "default" : "secondary"}>
+                          {loc.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right space-x-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => openDialog(loc)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDelete(loc)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>

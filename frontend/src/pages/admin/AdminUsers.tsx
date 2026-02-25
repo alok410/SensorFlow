@@ -47,26 +47,21 @@ const adminNavItems = [
   { label: "Locations", href: "/admin/locations" },
 ];
 
-
 const AdminUsers = () => {
   const { toast } = useToast();
 
   const [consumers, setConsumers] = useState<any[]>([]);
   const [locations, setLocations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [locationFilter, setLocationFilter] =
-    useState<string | "all">("all");
+  const [locationFilter, setLocationFilter] = useState<string | "all">("all");
 
-  const [isDialogOpen, setIsDialogOpen] =
-    useState(false);
-  const [editingConsumer, setEditingConsumer] =
-    useState<any>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingConsumer, setEditingConsumer] = useState<any>(null);
 
-  const [consumerToDelete, setConsumerToDelete] =
-    useState<any>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] =
-    useState(false);
+  const [consumerToDelete, setConsumerToDelete] = useState<any>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -78,41 +73,34 @@ const AdminUsers = () => {
 
   /* ================= LOAD DATA ================= */
 
-  const loadConsumers = async () => {
-    try {
-      const res = await getConsumers();
-
-      const array =
-        Array.isArray(res) ? res :
-        Array.isArray(res.data) ? res.data :
-        Array.isArray(res.data?.data) ? res.data.data :
-        [];
-
-      setConsumers(array);
-    } catch {
-      setConsumers([]);
-    }
+  const extractArray = (res: any) => {
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res?.data)) return res.data;
+    if (Array.isArray(res?.data?.data)) return res.data.data;
+    return [];
   };
 
-  const loadLocations = async () => {
+  const loadData = async () => {
     try {
-      const res = await getLocations();
+      setLoading(true);
 
-      const array =
-        Array.isArray(res) ? res :
-        Array.isArray(res.data) ? res.data :
-        Array.isArray(res.data?.data) ? res.data.data :
-        [];
+      const [consRes, locRes] = await Promise.all([
+        getConsumers(),
+        getLocations(),
+      ]);
 
-      setLocations(array);
+      setConsumers(extractArray(consRes));
+      setLocations(extractArray(locRes));
     } catch {
+      setConsumers([]);
       setLocations([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadConsumers();
-    loadLocations();
+    loadData();
   }, []);
 
   /* ================= FILTER ================= */
@@ -123,13 +111,12 @@ const AdminUsers = () => {
       c.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesLocation =
-      locationFilter === "all" ||
-      c.locationId === locationFilter;
+      locationFilter === "all" || c.locationId === locationFilter;
 
     return matchesSearch && matchesLocation;
   });
 
-  /* ================= DIALOG ================= */
+  /* ================= FORM ================= */
 
   const resetForm = () => {
     setFormData({
@@ -158,27 +145,19 @@ const AdminUsers = () => {
     setIsDialogOpen(true);
   };
 
-  /* ================= CREATE / UPDATE ================= */
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
       if (editingConsumer) {
         await updateConsumer(editingConsumer._id, formData);
-
-        toast({
-          title: "Consumer Updated",
-        });
+        toast({ title: "Consumer Updated" });
       } else {
         await createConsumer(formData);
-
-        toast({
-          title: "Consumer Created",
-        });
+        toast({ title: "Consumer Created" });
       }
 
-      await loadConsumers();
+      await loadData();
       setIsDialogOpen(false);
       resetForm();
     } catch {
@@ -197,12 +176,11 @@ const AdminUsers = () => {
     try {
       await deleteConsumer(consumerToDelete._id);
 
-      toast({
-        title: "Consumer Deleted",
-      });
+      toast({ title: "Consumer Deleted" });
 
-      await loadConsumers();
+      await loadData();
       setIsDeleteDialogOpen(false);
+      setConsumerToDelete(null);
     } catch {
       toast({
         title: "Delete Failed",
@@ -216,12 +194,9 @@ const AdminUsers = () => {
   return (
     <DashboardLayout navItems={adminNavItems} title="Consumer Management">
       <div className="space-y-6">
-
         {/* Header */}
-        <div className="flex justify-between">
-          <h1 className="text-3xl font-bold">
-            Consumer Management
-          </h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Consumer Management</h1>
 
           <Button onClick={() => openDialog()}>
             <Plus className="h-4 w-4 mr-2" />
@@ -229,168 +204,152 @@ const AdminUsers = () => {
           </Button>
         </div>
 
-        {/* ================= LOCATION FILTER CARDS ================= */}
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-          {/* All Locations */}
-          <Card
-            className={`cursor-pointer ${
-              locationFilter === "all"
-                ? "ring-2 ring-primary"
-                : ""
-            }`}
-            onClick={() => setLocationFilter("all")}
-          >
-            <CardContent className="p-4 flex justify-between items-center">
-              <div>
-                <p className="font-semibold">
-                  All Locations
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {consumers.length} Consumers
-                </p>
-              </div>
-              <Badge>{consumers.length}</Badge>
-            </CardContent>
-          </Card>
-
-          {locations.map((loc) => {
-            const count = consumers.filter(
-              (c) => c.locationId === loc._id
-            ).length;
-
-            const isActive =
-              locationFilter === loc._id;
-
-            return (
+        {loading ? (
+          <div className="flex justify-center items-center h-40">
+            <div className="animate-spin rounded-full h-10 w-10 border-t-4 border-blue-500"></div>
+          </div>
+        ) : (
+          <>
+            {/* LOCATION CARDS */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card
-                key={loc._id}
                 className={`cursor-pointer ${
-                  isActive ? "ring-2 ring-primary" : ""
+                  locationFilter === "all" ? "ring-2 ring-primary" : ""
                 }`}
-                onClick={() =>
-                  setLocationFilter(
-                    locationFilter === loc._id
-                      ? "all"
-                      : loc._id
-                  )
-                }
+                onClick={() => setLocationFilter("all")}
               >
                 <CardContent className="p-4 flex justify-between items-center">
                   <div>
-                    <p className="font-semibold">
-                      {loc.name}
-                    </p>
+                    <p className="font-semibold">All Locations</p>
                     <p className="text-sm text-muted-foreground">
-                      {count} Consumers
+                      {consumers.length} Consumers
                     </p>
                   </div>
-                  <Badge>{count}</Badge>
+                  <Badge>{consumers.length}</Badge>
                 </CardContent>
               </Card>
-            );
-          })}
-        </div>
 
-        {/* Table */}
-        <Card>
-          <CardHeader>
-            <Input
-              placeholder="Search consumers..."
-              value={searchTerm}
-              onChange={(e) =>
-                setSearchTerm(e.target.value)
-              }
-            />
-          </CardHeader>
+              {locations.map((loc) => {
+                const count = consumers.filter(
+                  (c) => c.locationId === loc._id
+                ).length;
 
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Meter</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
+                return (
+                  <Card
+                    key={loc._id}
+                    className={`cursor-pointer ${
+                      locationFilter === loc._id ? "ring-2 ring-primary" : ""
+                    }`}
+                    onClick={() =>
+                      setLocationFilter(
+                        locationFilter === loc._id ? "all" : loc._id
+                      )
+                    }
+                  >
+                    <CardContent className="p-4 flex justify-between items-center">
+                      <div>
+                        <p className="font-semibold">{loc.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {count} Consumers
+                        </p>
+                      </div>
+                      <Badge>{count}</Badge>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
 
-              <TableBody>
-                {filteredConsumers.map((c) => (
-                  <TableRow key={c._id}>
-                    <TableCell>{c.name}</TableCell>
-                    <TableCell>{c.email}</TableCell>
-                    <TableCell>
-                      {
-                        locations.find(
-                          (l) =>
-                            l._id === c.locationId
-                        )?.name
-                      }
-                    </TableCell>
-                    <TableCell>{c.meterId}</TableCell>
-                    <TableCell>
-                      <Badge>
-                        {c.isActive
-                          ? "Active"
-                          : "Inactive"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() =>
-                          openDialog(c)
-                        }
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setConsumerToDelete(c);
-                          setIsDeleteDialogOpen(true);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+            {/* TABLE */}
+            <Card>
+              <CardHeader>
+                <Input
+                  placeholder="Search consumers..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </CardHeader>
 
-        {/* ================= CREATE / EDIT DIALOG ================= */}
+              <CardContent>
+                {filteredConsumers.length === 0 ? (
+                  <div className="text-center py-10 text-muted-foreground">
+                    No consumers found.
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Location</TableHead>
+                        <TableHead>Meter</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead />
+                      </TableRow>
+                    </TableHeader>
 
+                    <TableBody>
+                      {filteredConsumers.map((c) => (
+                        <TableRow key={c._id}>
+                          <TableCell>{c.name}</TableCell>
+                          <TableCell>{c.email}</TableCell>
+                          <TableCell>
+                            {
+                              locations.find(
+                                (l) => l._id === c.locationId
+                              )?.name
+                            }
+                          </TableCell>
+                          <TableCell>{c.meterId}</TableCell>
+                          <TableCell>
+                            <Badge>
+                              {c.isActive ? "Active" : "Inactive"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => openDialog(c)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setConsumerToDelete(c);
+                                setIsDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </>
+        )}
+
+        {/* CREATE / EDIT DIALOG */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {editingConsumer
-                  ? "Edit Consumer"
-                  : "Add Consumer"}
+                {editingConsumer ? "Edit Consumer" : "Add Consumer"}
               </DialogTitle>
             </DialogHeader>
 
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-4"
-            >
+            <form onSubmit={handleSubmit} className="space-y-4">
               <Input
                 placeholder="Full Name"
                 value={formData.name}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    name: e.target.value,
-                  })
+                  setFormData({ ...formData, name: e.target.value })
                 }
                 required
               />
@@ -400,10 +359,7 @@ const AdminUsers = () => {
                 placeholder="Email"
                 value={formData.email}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    email: e.target.value,
-                  })
+                  setFormData({ ...formData, email: e.target.value })
                 }
                 required
               />
@@ -412,22 +368,15 @@ const AdminUsers = () => {
                 placeholder="Meter ID"
                 value={formData.meterId}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    meterId: e.target.value,
-                  })
+                  setFormData({ ...formData, meterId: e.target.value })
                 }
                 required
               />
 
-              {/* LOCATION DROPDOWN */}
               <Select
                 value={formData.locationId}
                 onValueChange={(value) =>
-                  setFormData({
-                    ...formData,
-                    locationId: value,
-                  })
+                  setFormData({ ...formData, locationId: value })
                 }
               >
                 <SelectTrigger>
@@ -435,10 +384,7 @@ const AdminUsers = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {locations.map((loc) => (
-                    <SelectItem
-                      key={loc._id}
-                      value={loc._id}
-                    >
+                    <SelectItem key={loc._id} value={loc._id}>
                       {loc.name}
                     </SelectItem>
                   ))}
@@ -451,10 +397,7 @@ const AdminUsers = () => {
                   placeholder="Password"
                   value={formData.password}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      password: e.target.value,
-                    })
+                    setFormData({ ...formData, password: e.target.value })
                   }
                   required
                 />
@@ -462,9 +405,7 @@ const AdminUsers = () => {
 
               <DialogFooter>
                 <Button type="submit">
-                  {editingConsumer
-                    ? "Update"
-                    : "Create"}
+                  {editingConsumer ? "Update" : "Create"}
                 </Button>
               </DialogFooter>
             </form>
@@ -478,39 +419,28 @@ const AdminUsers = () => {
         >
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>
-                Confirm Delete
-              </DialogTitle>
+              <DialogTitle>Confirm Delete</DialogTitle>
             </DialogHeader>
 
             <p>
               Are you sure you want to delete{" "}
-              <strong>
-                {consumerToDelete?.name}
-              </strong>
-              ?
+              <strong>{consumerToDelete?.name}</strong>?
             </p>
 
             <DialogFooter>
               <Button
                 variant="outline"
-                onClick={() =>
-                  setIsDeleteDialogOpen(false)
-                }
+                onClick={() => setIsDeleteDialogOpen(false)}
               >
                 Cancel
               </Button>
 
-              <Button
-                variant="destructive"
-                onClick={handleDelete}
-              >
+              <Button variant="destructive" onClick={handleDelete}>
                 Delete
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
       </div>
     </DashboardLayout>
   );

@@ -398,9 +398,26 @@ const usersForDropdown =
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={consumptionChartData}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-              <XAxis dataKey="date" />
+             <XAxis
+  dataKey="date"
+  tickFormatter={(value) =>
+    new Date(value).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "numeric",
+      year: "numeric",
+    })
+  }
+/>
               <YAxis />
-              <Tooltip />
+              <Tooltip
+  labelFormatter={(value) =>
+    new Date(value).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "numeric",
+      year: "numeric",
+    })
+  }
+/>
               <Line
                 type="monotone"
                 dataKey="consumption"
