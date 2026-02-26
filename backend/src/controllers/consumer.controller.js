@@ -90,13 +90,17 @@ export const updateConsumer = async (req, res) => {
   try {
     delete req.body.role; // prevent role modification
 
-    if (req.body.password) {
+    // If password is empty string or not provided → remove it from update object
+    if (!req.body.password || req.body.password.trim() === "") {
+      delete req.body.password;
+    } else {
+      // If password is provided → hash it
       req.body.password = await bcrypt.hash(req.body.password, 10);
     }
 
     const updated = await User.findOneAndUpdate(
       { _id: req.params.id, role: "consumer" },
-      req.body,
+      { $set: req.body },   // better practice
       { new: true }
     ).select("-password");
 
