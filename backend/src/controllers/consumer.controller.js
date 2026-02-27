@@ -90,7 +90,6 @@ export const updateConsumer = async (req, res) => {
   try {
     delete req.body.role; // prevent role modification
 
-    // If password is empty string or not provided → remove it from update object
     if (!req.body.password || req.body.password.trim() === "") {
       delete req.body.password;
     } else {
