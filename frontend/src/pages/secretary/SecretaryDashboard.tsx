@@ -267,12 +267,12 @@ useEffect(() => {
 
 
 const totalWaterConsumption = dailyConsumptionByDate.reduce(
-  (s, d) => s + (Number(d.consumption || 0) * 1000), 
+  (s, d) => s + (Number(d.consumption || 0) ), 
   0
 );
 const consumptionChartData = dailyConsumptionByDate.map((d) => ({
   date: d.reading_date,
-  consumption: Number(d.consumption || 0) * 1000, // convert to liters
+  consumption: Number(d.consumption || 0) , // convert to liters
 }));
   const assignedInvoices = invoices.filter(inv => assignedConsumerIds.includes(inv.consumerId));
   const assignedReadings = meterReadings.filter(r => assignedConsumerIds.includes(r.consumerId));
@@ -409,7 +409,7 @@ const top5UsageData = dailyConsumptionByMeter
 
     return {
       name: consumer?.name.split(" ")[0] || "Unknown",
-      usage: Number(d.consumption || 0) * 1000,
+      usage: Number(d.consumption || 0) ,
     };
   })
   .filter((u) => u.usage > 0)
