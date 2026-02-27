@@ -159,6 +159,8 @@ useEffect(() => {
 
       for (const deviceId of meterIds) {
         const daily = await getDailyConsumption(deviceId, start, end);
+        console.log(daily);
+        
         const live = await getLiveMeterData(deviceId);
 
         const dailyArray =
@@ -374,7 +376,7 @@ const usersForDropdown =
         <StatsCard title="Flow Rate (L/s)" value={`${liveData?.flow_rate || 0}`} icon={Activity} />
       </div>
       <div className="hover:scale-[1.02] transition">
-        <StatsCard title="Total Consumption" value={`${totalWaterConsumption}`} icon={Droplets} />
+        <StatsCard title="Total Consumption" value={`${Number(totalWaterConsumption).toLocaleString("en-IN")} L`} icon={Droplets} />
       </div>
     </div>
 

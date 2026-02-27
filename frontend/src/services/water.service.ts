@@ -29,9 +29,21 @@ export const getDailyConsumption = async (
     `${BASE_URL}/history?device=${deviceId}&start=${start}&end=${end}`,
     getAuthHeader()
   );
-  return res.data;
-};
 
+  const { serial_number, last_active, data } = res.data;
+
+  // Multiply consumption by 1000
+  const updatedData = data.map((item: any) => ({
+    ...item,
+    consumption: Number(item.consumption) * 1000,
+  }));
+
+  return {
+    serial_number,
+    last_active,
+    data: updatedData,
+  };
+};
 export const getHistoricalReadings = async (
   deviceId: string,
   start: string,
