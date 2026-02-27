@@ -84,7 +84,7 @@ export const fetchMeterReadingsFromSenseflow = async (
     meterId: json.serial_number,
     previousReading: Number(item.opening_reading),
     reading: Number(item.closing_reading) ,
-    consumption: Number(item.consumption) ,
+    consumption: Number(item.consumption)*1000 ,
     readingDate: new Date(item.reading_date).toISOString(),
     source: 'smart_meter',
   }));
