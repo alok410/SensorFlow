@@ -199,7 +199,7 @@ const ConsumerDashboard: React.FC = () => {
   const lastReading = filteredReadings.at(-1);
   const consumptionData = filteredReadings.map((r) => ({
     date: format(parseISO(r.readingDate), 'dd MMM'),
-    consumption: r.consumption*1000 ,
+    consumption: r.consumption ,
   }));
 
   const monthlyAnalysis = useMemo(() => {
@@ -297,7 +297,7 @@ const ConsumerDashboard: React.FC = () => {
           <StatsCard title="Outstanding Amount" value={`₹${totalOutstanding.toFixed(2)}`} icon={IndianRupee} variant={totalOutstanding > 0 ? 'warning' : 'success'} />
           <StatsCard title="Free Tier" value={`${FREE_TIER_LITERS.toLocaleString()} L`} icon={Gift} variant="primary" />
           <StatsCard title="Last Reading" value={`${(lastReading?.reading || 0).toLocaleString()} M³`} icon={Droplets} variant="default" />
-          <StatsCard title="Last Consumption" value={`${((lastReading?.consumption)*1000 || 0).toLocaleString()} L`} icon={TrendingUp} variant="default" />
+          <StatsCard title="Last Consumption" value={`${((lastReading?.consumption) || 0).toLocaleString()} L`} icon={TrendingUp} variant="default" />
           <StatsCard title="Pending Bills" value={pendingInvoices.length} icon={FileText} variant={pendingInvoices.length > 0 ? 'warning' : 'default'} />
           <StatsCard
             title="Last Active"
@@ -483,11 +483,11 @@ const ConsumerDashboard: React.FC = () => {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
                 <p className="text-sm text-muted-foreground">Total Consumption</p>
-                <p className="text-2xl font-bold text-primary">{((monthlyAnalysis.totalConsumption)*1000).toLocaleString() } L</p>
+                <p className="text-2xl font-bold text-primary">{((monthlyAnalysis.totalConsumption)).toLocaleString() } L</p>
               </div>
               <div className="p-4 rounded-lg bg-muted/50 border">
                 <p className="text-sm text-muted-foreground">Average per Reading</p>
-                <p className="text-2xl font-bold">{(monthlyAnalysis.avgConsumption*1000).toLocaleString()} L</p>
+                <p className="text-2xl font-bold">{(monthlyAnalysis.avgConsumption).toLocaleString()} L</p>
               </div>
               <div className="p-4 rounded-lg bg-muted/50 border">
                 <p className="text-sm text-muted-foreground">Chargeable Usage</p>
@@ -532,7 +532,7 @@ const ConsumerDashboard: React.FC = () => {
                             <TableCell className="text-muted-foreground">{reading.previousReading.toLocaleString()} M³</TableCell>
                             <TableCell>
                               <Badge variant="outline" className={reading.consumption*100 > FREE_TIER_LITERS ? 'border-warning text-warning' : 'border-success text-success'}>
-                                {(reading.consumption*1000).toLocaleString()} L
+                                {(reading.consumption).toLocaleString()} L
                               </Badge>
                             </TableCell>
                            
@@ -552,11 +552,11 @@ const ConsumerDashboard: React.FC = () => {
               <div className="flex gap-4 pt-4 border-t">
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-muted-foreground">Min:</span>
-                  <Badge variant="outline" className="border-success text-success">{(monthlyAnalysis.minConsumption*1000).toLocaleString()} L</Badge>
+                  <Badge variant="outline" className="border-success text-success">{(monthlyAnalysis.minConsumption).toLocaleString()} L</Badge>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-muted-foreground">Max:</span>
-                  <Badge variant="outline" className="border-warning text-warning">{(monthlyAnalysis.maxConsumption*1000).toLocaleString()} L</Badge>
+                  <Badge variant="outline" className="border-warning text-warning">{(monthlyAnalysis.maxConsumption).toLocaleString()} L</Badge>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-muted-foreground">Readings:</span>
