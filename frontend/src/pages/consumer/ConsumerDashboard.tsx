@@ -42,6 +42,7 @@ import {
   BarChart3,
   IndianRupee ,
   Clock,
+  AlignCenter,
 } from 'lucide-react';
 import {
   LineChart,
@@ -198,7 +199,7 @@ const ConsumerDashboard: React.FC = () => {
   const lastReading = filteredReadings.at(-1);
   const consumptionData = filteredReadings.map((r) => ({
     date: format(parseISO(r.readingDate), 'dd MMM'),
-    consumption: r.consumption,
+    consumption: r.consumption*1000 ,
   }));
 
   const monthlyAnalysis = useMemo(() => {
@@ -295,8 +296,8 @@ const ConsumerDashboard: React.FC = () => {
           <StatsCard title="Prepaid Balance" value={`₹${currentPrepaidBalance.toFixed(2)}`} icon={Wallet} variant="success" />
           <StatsCard title="Outstanding Amount" value={`₹${totalOutstanding.toFixed(2)}`} icon={IndianRupee} variant={totalOutstanding > 0 ? 'warning' : 'success'} />
           <StatsCard title="Free Tier" value={`${FREE_TIER_LITERS.toLocaleString()} L`} icon={Gift} variant="primary" />
-          <StatsCard title="Last Reading" value={`${(lastReading?.reading || 0).toLocaleString()} L`} icon={Droplets} variant="default" />
-          <StatsCard title="Last Consumption" value={`${(lastReading?.consumption || 0).toLocaleString()} L`} icon={TrendingUp} variant="default" />
+          <StatsCard title="Last Reading" value={`${(lastReading?.reading || 0).toLocaleString()} M³`} icon={Droplets} variant="default" />
+          <StatsCard title="Last Consumption" value={`${((lastReading?.consumption)*1000 || 0).toLocaleString()} L`} icon={TrendingUp} variant="default" />
           <StatsCard title="Pending Bills" value={pendingInvoices.length} icon={FileText} variant={pendingInvoices.length > 0 ? 'warning' : 'default'} />
           <StatsCard
             title="Last Active"
@@ -319,21 +320,18 @@ const ConsumerDashboard: React.FC = () => {
               loadingLastActive
                 ? "Loading..."
                 : latestStatus?.meter_reading
-                  ? `${Number(latestStatus.meter_reading).toLocaleString()} L`
+                  ? `${Number(latestStatus.meter_reading).toLocaleString()} M³`
                   : "—"
             }
             icon={Droplets}
             variant="primary"
           />
-
-
-
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle>Consumption History</CardTitle>
+              <CardTitle>Consumption History in Liters</CardTitle>
               <CardDescription>Your water usage over time</CardDescription>
             </CardHeader>
             <CardContent>
@@ -485,11 +483,11 @@ const ConsumerDashboard: React.FC = () => {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
                 <p className="text-sm text-muted-foreground">Total Consumption</p>
-                <p className="text-2xl font-bold text-primary">{monthlyAnalysis.totalConsumption.toLocaleString()} L</p>
+                <p className="text-2xl font-bold text-primary">{((monthlyAnalysis.totalConsumption)*1000).toLocaleString() } L</p>
               </div>
               <div className="p-4 rounded-lg bg-muted/50 border">
                 <p className="text-sm text-muted-foreground">Average per Reading</p>
-                <p className="text-2xl font-bold">{monthlyAnalysis.avgConsumption.toLocaleString()} L</p>
+                <p className="text-2xl font-bold">{(monthlyAnalysis.avgConsumption*1000).toLocaleString()} L</p>
               </div>
               <div className="p-4 rounded-lg bg-muted/50 border">
                 <p className="text-sm text-muted-foreground">Chargeable Usage</p>
@@ -517,8 +515,8 @@ const ConsumerDashboard: React.FC = () => {
                   <TableRow>
                     <TableHead>Date</TableHead>
                     <TableHead>Current Reading</TableHead>
-                    <TableHead>Previous Reading</TableHead> <div className="0">                      
-                    </div>
+                    <TableHead>Previous Reading</TableHead>          
+                
                     <TableHead>Consumption</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -530,11 +528,11 @@ const ConsumerDashboard: React.FC = () => {
                         new Date(a.readingDate).getTime()).map((reading) => (
                           <TableRow key={reading._id}>
                             <TableCell>{format(parseISO(reading.readingDate), 'dd MMM yyyy')}</TableCell>
-                            <TableCell className="font-medium">{reading.reading.toLocaleString()} L</TableCell>
-                            <TableCell className="text-muted-foreground">{reading.previousReading.toLocaleString()} L</TableCell>
+                            <TableCell className="font-medium">{reading.reading.toLocaleString()} M³</TableCell>
+                            <TableCell className="text-muted-foreground">{reading.previousReading.toLocaleString()} M³</TableCell>
                             <TableCell>
-                              <Badge variant="outline" className={reading.consumption > FREE_TIER_LITERS ? 'border-warning text-warning' : 'border-success text-success'}>
-                                {reading.consumption.toLocaleString()} L
+                              <Badge variant="outline" className={reading.consumption*100 > FREE_TIER_LITERS ? 'border-warning text-warning' : 'border-success text-success'}>
+                                {(reading.consumption*1000).toLocaleString()} L
                               </Badge>
                             </TableCell>
                            
@@ -554,11 +552,11 @@ const ConsumerDashboard: React.FC = () => {
               <div className="flex gap-4 pt-4 border-t">
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-muted-foreground">Min:</span>
-                  <Badge variant="outline" className="border-success text-success">{monthlyAnalysis.minConsumption.toLocaleString()} L</Badge>
+                  <Badge variant="outline" className="border-success text-success">{(monthlyAnalysis.minConsumption*1000).toLocaleString()} L</Badge>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-muted-foreground">Max:</span>
-                  <Badge variant="outline" className="border-warning text-warning">{monthlyAnalysis.maxConsumption.toLocaleString()} L</Badge>
+                  <Badge variant="outline" className="border-warning text-warning">{(monthlyAnalysis.maxConsumption*1000).toLocaleString()} L</Badge>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-muted-foreground">Readings:</span>
