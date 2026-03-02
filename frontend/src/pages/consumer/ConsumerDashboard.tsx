@@ -184,6 +184,25 @@ const ConsumerDashboard: React.FC = () => {
   }, [consumer?.meterId]);
 
 
+/* ================= THIS MONTH TOTAL ================= */
+const thisMonthTotal = useMemo(() => {
+  if (!readings || readings.length === 0) return 0;
+
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  return readings
+    .filter((r) => {
+      const date = parseISO(r.readingDate);
+      return (
+        date.getMonth() === currentMonth &&
+        date.getFullYear() === currentYear
+      );
+    })
+    .reduce((sum, r) => sum + r.consumption, 0);
+}, [readings]);
+
 
   /* ================= DERIVED ================= */
   const filteredReadings = useMemo(() => {
@@ -296,9 +315,15 @@ const ConsumerDashboard: React.FC = () => {
           <StatsCard title="Prepaid Balance" value={`₹${currentPrepaidBalance.toFixed(2)}`} icon={Wallet} variant="success" />
           <StatsCard title="Outstanding Amount" value={`₹${totalOutstanding.toFixed(2)}`} icon={IndianRupee} variant={totalOutstanding > 0 ? 'warning' : 'success'} />
           <StatsCard title="Free Tier" value={`${FREE_TIER_LITERS.toLocaleString()} L`} icon={Gift} variant="primary" />
-          <StatsCard title="Last Reading" value={`${(lastReading?.reading || 0).toLocaleString()} M³`} icon={Droplets} variant="default" />
+          {/* <StatsCard title="Last Reading" value={`${(lastReading?.reading || 0).toLocaleString()} M³`} icon={Droplets} variant="default" /> */}
           <StatsCard title="Last Consumption" value={`${((lastReading?.consumption) || 0).toLocaleString()} L`} icon={TrendingUp} variant="default" />
           <StatsCard title="Pending Bills" value={pendingInvoices.length} icon={FileText} variant={pendingInvoices.length > 0 ? 'warning' : 'default'} />
+            <StatsCard
+  title="This Month Consumption"
+  value={`${thisMonthTotal.toLocaleString()} L`}
+  icon={BarChart3}
+  variant="primary"
+/>
           <StatsCard
             title="Last Active"
             value={

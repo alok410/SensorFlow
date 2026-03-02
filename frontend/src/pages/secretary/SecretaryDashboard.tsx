@@ -86,7 +86,6 @@ const [loading, setLoading] = useState(true);
     if (loggedSecretary) {
   setSecretaryLocationId(loggedSecretary.locationId);
 
-  // ✅ Fetch Locations
   const locationsRes = await getLocations();
 
   const locationsArray =
