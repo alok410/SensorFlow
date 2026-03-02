@@ -322,7 +322,7 @@ const thisMonthTotal = useMemo(() => {
   title="This Month Consumption"
   value={`${thisMonthTotal.toLocaleString()} L`}
   icon={BarChart3}
-  variant="primary"
+  variant="success"
 />
           <StatsCard
             title="Last Active"
