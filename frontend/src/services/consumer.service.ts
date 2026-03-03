@@ -44,7 +44,6 @@
     });
 
     return response.json();
-    console.log(response.json());
     
   };
 

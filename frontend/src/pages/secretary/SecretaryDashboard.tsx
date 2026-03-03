@@ -152,31 +152,31 @@ useEffect(() => {
         setDailyConsumptionByMeter([]);
         return;
       }
+const today = new Date();
+let startDateObj = new Date();
 
-      const today = new Date();
-      let startDateObj = new Date();
+if (dateFilter === "7") startDateObj.setDate(today.getDate() - 7);
+if (dateFilter === "15") startDateObj.setDate(today.getDate() - 15);
+if (dateFilter === "30") startDateObj.setDate(today.getDate() - 30);
 
-      if (dateFilter === "7") startDateObj.setDate(today.getDate() - 7);
-      if (dateFilter === "15") startDateObj.setDate(today.getDate() - 15);
-      if (dateFilter === "30") startDateObj.setDate(today.getDate() - 30);
+let start: string;
+let end: string;
 
-      let start =
-        dateFilter === "custom" && startDate
-          ? `${startDate}T00:00:00`
-          : startDateObj.toISOString();
+if (dateFilter === "custom" && startDate && endDate) {
+  start = startDate;
+  end = endDate;
+} else {
+  start = startDateObj.toISOString().split("T")[0];
+  end = today.toISOString().split("T")[0];
+}
 
-      let end =
-        dateFilter === "custom" && endDate
-          ? `${endDate}T23:59:59`
-          : today.toISOString();
-
-      const filteredConsumers =
+        const filteredConsumers =
         selectedUser === "all"
-          ? assignedConsumers
-          : assignedConsumers.filter(
-              (c) => c._id?.toString() === selectedUser
-            );
-
+        ? assignedConsumers
+        : assignedConsumers.filter(
+          (c) => c._id?.toString() === selectedUser
+        );
+        
       const meterIds = filteredConsumers
         .map((c) => c.meterId)
         .filter((id) => id && id.trim() !== "");
@@ -198,13 +198,13 @@ useEffect(() => {
               start,
               end
             );
-
+            
             const dailyArray =
-              Array.isArray(response)
-                ? response
-                : Array.isArray(response?.data)
-                ? response.data
-                : [];
+            Array.isArray(response)
+            ? response
+            : Array.isArray(response?.data)
+            ? response.data
+            : [];
 
             dailyArray.forEach((item: any) => {
               const date =
@@ -416,7 +416,6 @@ const top5UsageData = dailyConsumptionByMeter
   .slice(0, 5);
 
 
-console.log("Top 5 Usage Data:", top5UsageData);
 
   return (
     <DashboardLayout navItems={secretaryNavItems} title="Secretary Dashboard">
@@ -437,7 +436,7 @@ console.log("Top 5 Usage Data:", top5UsageData);
           <StatsCard title="Assigned Consumers" value={assignedConsumers.length} icon={Users} variant="primary" />
        <StatsCard
   title="Total Usage (Filtered)"
-  value={formatLiters(totalWaterConsumption)}
+  value={totalWaterConsumption+" L"}
   icon={Droplets}
   variant="default"
 />
@@ -537,14 +536,25 @@ console.log("Top 5 Usage Data:", top5UsageData);
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={consumptionChartData}>
           <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-        <XAxis
+<XAxis
   dataKey="date"
-  tick={{ fontSize: 12 }}
-  angle={-45}
-  textAnchor="end"
+  tickFormatter={(value) =>
+    new Date(value).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "numeric",
+      year: "numeric",
+    })
+  }
+/>     <YAxis />
+    <Tooltip
+  labelFormatter={(value) =>
+    new Date(value).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "numeric",
+      year: "numeric",
+    })
+  }
 />
-          <YAxis />
-          <Tooltip />
           <Line
             type="monotone"
             dataKey="consumption"

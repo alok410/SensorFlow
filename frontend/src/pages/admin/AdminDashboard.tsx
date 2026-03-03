@@ -159,7 +159,6 @@ useEffect(() => {
 
       for (const deviceId of meterIds) {
         const daily = await getDailyConsumption(deviceId, start, end);
-        console.log(daily);
         
         const live = await getLiveMeterData(deviceId);
 

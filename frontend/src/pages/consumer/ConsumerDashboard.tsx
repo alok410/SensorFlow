@@ -235,6 +235,7 @@ const thisMonthTotal = useMemo(() => {
     }
 
     const consumptions = filteredReadings.map((r) => r.consumption);
+    
     const total = consumptions.reduce((a, b) => a + b, 0);
     const chargeable = Math.max(0, total - FREE_TIER_LITERS);
 
