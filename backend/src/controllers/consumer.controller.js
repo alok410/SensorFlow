@@ -1,9 +1,10 @@
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 
-/* =================================
-   ADMIN: CREATE CONSUMER
-=================================*/
+
+
+
+
 export const createConsumer = async (req, res) => {
   try {
     const { name, email, password, phone, locationId, meterId } = req.body;
@@ -59,9 +60,8 @@ export const createConsumer = async (req, res) => {
 };
 
 
-/* =================================
-   ADMIN: GET ALL CONSUMERS
-=================================*/
+
+
 export const getAllConsumers = async (req, res) => {
   try {
     const consumers = await User.find({ role: "consumer", isActive: true })
@@ -84,7 +84,7 @@ export const getAllConsumers = async (req, res) => {
 
 
 /* =================================
-   ADMIN: UPDATE CONSUMER
+   
 =================================*/
 export const updateConsumer = async (req, res) => {
   try {
@@ -99,7 +99,7 @@ export const updateConsumer = async (req, res) => {
 
     const updated = await User.findOneAndUpdate(
       { _id: req.params.id, role: "consumer" },
-      { $set: req.body },   // better practice
+      { $set: req.body },   
       { new: true }
     ).select("-password");
 

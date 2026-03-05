@@ -36,7 +36,7 @@ const userSchema = new mongoose.Schema(
 
 meterId: {
   type: String,
-  unique: true,
+
   sparse: true, // ⭐ THIS IS THE KEY
   required: function () {
     return this.role === "consumer";
