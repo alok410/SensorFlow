@@ -165,7 +165,7 @@ useEffect(() => {
         const dailyArray =
           Array.isArray(daily) ? daily :
           Array.isArray(daily?.data) ? daily.data :
-          Array.isArray(daily?.data?.data) ? daily.data.data :
+          // Array.isArray(daily?.data?.data) ? daily.data.data :
           [];
 
         allDaily = [...allDaily, ...dailyArray];
@@ -354,14 +354,6 @@ const usersForDropdown =
       </CardContent>
     </Card>
 
-    {/* LEAKAGE ALERT */}
-    {leakageDetected && (
-      <Card className="mb-6 border-red-400 bg-red-50">
-        <CardContent className="p-4 text-red-600 font-semibold flex items-center gap-2">
-          ⚠️ Possible Leakage Detected — Flow Rate Above Threshold
-        </CardContent>
-      </Card>
-    )}
 
     {/* STATS SECTION */}
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">

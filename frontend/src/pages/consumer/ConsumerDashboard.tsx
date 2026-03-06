@@ -30,6 +30,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { FREE_TIER_LITERS } from '@/types';
+import { getHistoricalReadings } from '../../services/water.service';
+
 const API_URL2 = import.meta.env.VITE_API_URL;
 import {
   Droplets,
@@ -149,27 +151,107 @@ const ConsumerDashboard: React.FC = () => {
   }, [consumer?._id, token]);
 
   /* ================= FETCH READINGS ================= */
-  useEffect(() => {
-    if (!consumer || !startDate || !endDate) return;
+/* ================= FETCH READINGS ================= */
+useEffect(() => {
+  if (!consumer || !startDate || !endDate) return;
 
-    setAppliedStartDate(startDate);
-    setAppliedEndDate(endDate);
-    applyQuickFilter(7);
-  }, [consumer]);
-  useEffect(() => {
-    if (!consumer || !appliedStartDate || !appliedEndDate) return;
+  setAppliedStartDate(startDate);
+  setAppliedEndDate(endDate);
+  applyQuickFilter(7);
+}, [consumer]);
 
+useEffect(() => {
+  if (!consumer || !appliedStartDate || !appliedEndDate) return;
+
+  const loadReadings = async () => {
     setLoadingReadings(true);
 
-    fetchMeterReadingsFromSenseflow(
-      consumer.meterId,
-      consumer._id,
-      format(appliedStartDate, 'yyyy-MM-dd'),
-      format(appliedEndDate, 'yyyy-MM-dd')
-    )
-      .then(setReadings)
-      .finally(() => setLoadingReadings(false));
-  }, [consumer?._id, appliedStartDate, appliedEndDate]);
+    try {
+      
+      /* 1️⃣ Get historical readings from DB */
+      const dbReadings = await fetchMeterReadingsFromSenseflow(
+        consumer.meterId,
+        consumer._id,
+        format(appliedStartDate, 'yyyy-MM-dd'),
+        format(appliedEndDate, 'yyyy-MM-dd')
+      );
+      
+      let mergedReadings = [...dbReadings];
+      
+      /* 2️⃣ Fetch today's live readings from Senseflow */
+      const today = new Date();
+      const tomorrow = new Date(today.getTime() + 86400000);
+      
+      const apiData = await getHistoricalReadings(
+        consumer.meterId,
+        format(today, 'yyyy-MM-dd'),
+        format(tomorrow, 'yyyy-MM-dd')
+      );
+      console.log("apidata:",apiData);
+
+      if (apiData?.data?.length >= 1) {
+
+        const sorted = [...apiData.data].sort(
+  (a, b) =>
+    new Date(a.reading_datetime).getTime() -
+    new Date(b.reading_datetime).getTime()
+);
+
+const earliest = sorted[0];
+const latest = sorted[sorted.length - 1];
+
+const opening = Number(earliest.meter_reading);
+const closing = Number(latest.meter_reading);
+
+const consumption = sorted.length > 1
+  ? (closing - opening) * 1000
+  : 0;
+
+        const todayStr = format(today, 'yyyy-MM-dd');
+
+        const exists = mergedReadings.some(
+          (r) => r.readingDate === todayStr
+        );
+
+        if (!exists) {
+
+    mergedReadings.push({
+  _id: 'today-reading',
+  consumerId: consumer._id,
+  meterId: consumer.meterId,
+  source: 'smart_meter',
+  readingDate: todayStr,
+  reading: closing,
+  previousReading: opening,
+  consumption: consumption,
+});
+
+        }
+
+      }
+
+setReadings(
+  mergedReadings.sort(
+    (a, b) =>
+      new Date(a.readingDate).getTime() -
+      new Date(b.readingDate).getTime()
+  )
+);
+
+    } catch (err) {
+
+      console.error('Error loading readings:', err);
+
+    } finally {
+
+      setLoadingReadings(false);
+
+    }
+  };
+
+  loadReadings();
+
+}, [consumer?._id, appliedStartDate, appliedEndDate]);
 
   /* ================= LAST ACTIVE ================= */
   useEffect(() => {
@@ -215,11 +297,16 @@ const thisMonthTotal = useMemo(() => {
     );
   }, [readings, appliedStartDate, appliedEndDate]);
 
-  const lastReading = filteredReadings.at(-1);
-  const consumptionData = filteredReadings.map((r) => ({
-    date: format(parseISO(r.readingDate), 'dd MMM'),
-    consumption: r.consumption ,
-  }));
+const lastReading = [...filteredReadings].sort(
+  (a, b) =>
+    new Date(b.readingDate).getTime() -
+    new Date(a.readingDate).getTime()
+)[0];
+const consumptionData = filteredReadings.map((r) => ({
+  date: r.readingDate,
+  label: format(parseISO(r.readingDate), 'dd MMM'),
+  consumption: r.consumption,
+}));
 
   const monthlyAnalysis = useMemo(() => {
     if (filteredReadings.length === 0) {
@@ -364,7 +451,11 @@ const thisMonthTotal = useMemo(() => {
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={consumptionData}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="date" className="text-xs" />
+                 <XAxis
+  dataKey="date"
+  tickFormatter={(d) => format(parseISO(d), "dd MMM")}
+  className="text-xs"
+/>
                   <YAxis className="text-xs" />
                   <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
                   <Line type="monotone" dataKey="consumption" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ fill: 'hsl(var(--primary))' }} />
@@ -553,11 +644,18 @@ const thisMonthTotal = useMemo(() => {
                         new Date(b.readingDate).getTime() -
                         new Date(a.readingDate).getTime()).map((reading) => (
                           <TableRow key={reading._id}>
-                            <TableCell>{format(parseISO(reading.readingDate), 'dd MMM yyyy')}</TableCell>
+                    <TableCell>
+  {format(parseISO(reading.readingDate), 'dd MMM yyyy')}
+  {reading._id === 'today-reading' && (
+    <Badge className="ml-2 bg-primary/10 text-primary border-primary/20">
+      Live
+    </Badge>
+  )}
+</TableCell>
                             <TableCell className="font-medium">{reading.reading.toLocaleString()} M³</TableCell>
                             <TableCell className="text-muted-foreground">{reading.previousReading.toLocaleString()} M³</TableCell>
                             <TableCell>
-                              <Badge variant="outline" className={reading.consumption*100 > FREE_TIER_LITERS ? 'border-warning text-warning' : 'border-success text-success'}>
+                      <Badge variant="outline" className={reading.consumption > FREE_TIER_LITERS ? 'border-warning text-warning' : 'border-success text-success'}>
                                 {(reading.consumption).toLocaleString()} L
                               </Badge>
                             </TableCell>
