@@ -76,7 +76,7 @@ useEffect(() => {
   const demoAccounts = [
     { email: 'admin@demo.com', role: 'Admin' },
     { email: 'secretary1@gmail.com', role: 'seceratary' },
-    { email: 'lk@gmail.com', role: 'consumer' }
+    { email: 'h2@gmail.com', role: 'consumer' }
 
   ];
 
