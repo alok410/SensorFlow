@@ -464,7 +464,7 @@ const getTodayUsage = (meterId: string) => {
     </Card>
     <Card className="mt-6">
   <CardHeader>
-    <CardTitle>Consumers Water Usage</CardTitle>
+    <CardTitle>Consumers Today's Water Usage</CardTitle>
     <CardDescription>
       Real-time usage per meter
     </CardDescription>
