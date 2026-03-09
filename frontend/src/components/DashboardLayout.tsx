@@ -55,7 +55,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, navI
               <div className="p-2 rounded-lg gradient-primary">
                 <Droplets className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="font-display font-bold text-lg hidden sm:block">SensorFlow</span>
+              <span className="font-display font-bold text-lg hidden sm:block">Sense Flow</span>
             </Link>
             <span className="text-muted-foreground hidden sm:block">|</span>
             <span className="font-medium text-sm sm:text-base">{title}</span>

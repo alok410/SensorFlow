@@ -89,7 +89,7 @@ useEffect(() => {
               <Droplets className="h-8 w-8 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-2xl font-display font-bold text-foreground">SensorFlow</h1>
+              <h1 className="text-2xl font-display font-bold text-foreground">Sense Flow</h1>
               <p className="text-sm text-muted-foreground">Water Management System</p>
             </div>
           </div>

@@ -264,17 +264,14 @@
       .filter(i => i.status !== 'paid')
       .reduce((sum, i) => sum + i.totalAmount, 0);
 
-    // Water usage analytics
     const totalConsumption = assignedInvoices.reduce((sum, inv) => sum + inv.consumption, 0);
     const totalFreeConsumption = assignedInvoices.reduce((sum, inv) => sum + inv.freeConsumption, 0);
     const totalChargeableConsumption = assignedInvoices.reduce((sum, inv) => sum + inv.chargeableConsumption, 0);
     const avgConsumptionPerUser = assignedConsumers.length > 0 ? totalConsumption / assignedConsumers.length : 0;
 
-    // Get current free tier
     const currentRate = waterRates.length > 0 ? waterRates[waterRates.length - 1] : null;
     const freeTierLimit = currentRate?.freeTierLiters || 13000;
 
-    // Per-consumer usage data for chart
     const consumerUsageData = assignedConsumers.map(consumer => {
       const consumerInvoices = assignedInvoices.filter(inv => inv.consumerId === consumer._id);
       const consumerReadings = assignedReadings.filter(r => r.consumerId === consumer._id);
