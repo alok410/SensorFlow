@@ -7,7 +7,9 @@ import {
   ResponsiveContainer, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip
 } from 'recharts';
-
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import {  Plus } from 'lucide-react';
 import { getConsumers } from "@/services/consumer.service";
 import { getAllSecretaries } from "@/services/secretary.service";
 import { getLocations } from "@/services/location.service";
@@ -27,7 +29,7 @@ const adminNavItems = [
 ];
 
 const AdminDashboard: React.FC = () => {
-
+const [dailyConsumptionByMeter, setDailyConsumptionByMeter] = useState<any[]>([]);
   const [consumers, setConsumers] = useState<any[]>([]);
   const [secretaries, setSecretaries] = useState<any[]>([]);
   const [locations, setLocations] = useState<any[]>([]);
@@ -154,26 +156,46 @@ useEffect(() => {
         return;
       }
 
-      let allDaily: any[] = [];
-      let lastLiveData: any = null;
+let allDaily: any[] = [];
+let lastLiveData: any = null;
 
-      for (const deviceId of meterIds) {
-        const daily = await getDailyConsumption(deviceId, start, end);
-        
-        const live = await getLiveMeterData(deviceId);
+const grouped: Record<string, number> = {};
+const groupedByMeter: Record<string, number> = {};
 
-        const dailyArray =
-          Array.isArray(daily) ? daily :
-          Array.isArray(daily?.data) ? daily.data :
-          // Array.isArray(daily?.data?.data) ? daily.data.data :
-          [];
+for (const deviceId of meterIds) {
 
-        allDaily = [...allDaily, ...dailyArray];
-        lastLiveData = live?.data || live || null;
-      }
+  const daily = await getDailyConsumption(deviceId, start, end);
+  const live = await getLiveMeterData(deviceId);
+
+  const dailyArray =
+    Array.isArray(daily) ? daily :
+    Array.isArray(daily?.data) ? daily.data :
+    [];
+
+  // IMPORTANT: push into allDaily
+  allDaily = [...allDaily, ...dailyArray];
+
+  dailyArray.forEach((item: any) => {
+
+    const date = item.reading_date;
+    const value = Number(item.consumption || 0);
+
+    // GROUP BY DATE
+    if (!grouped[date]) grouped[date] = 0;
+    grouped[date] += value;
+
+    // GROUP BY METER
+    if (!groupedByMeter[deviceId]) groupedByMeter[deviceId] = 0;
+    groupedByMeter[deviceId] += value;
+
+  });
+
+  lastLiveData = live?.data || live || null;
+}
+
 
       // Merge by date
-      const grouped: Record<string, number> = {};
+
 
       allDaily.forEach((item) => {
         const date = item.reading_date;
@@ -182,7 +204,12 @@ useEffect(() => {
         if (!grouped[date]) grouped[date] = 0;
         grouped[date] += value;
       });
+const mergedMeters = Object.keys(groupedByMeter).map((meterId) => ({
+  meterId,
+  consumption: groupedByMeter[meterId]
+}));
 
+setDailyConsumptionByMeter(mergedMeters);
       const merged = Object.keys(grouped).map((date) => ({
         reading_date: date,
         consumption: grouped[date],
@@ -241,7 +268,19 @@ const usersForDropdown =
     date: d.reading_date,
     consumption: Number(d.consumption),
   }));
+const formatLiters = (value: number) => {
+  if (value >= 1000000) return (value / 1000000).toFixed(2) + " ML";
+  if (value >= 1000) return (value / 1000).toFixed(2) + " L";
+  return value.toFixed(0) + " L";
+};
+const getTodayUsage = (meterId: string) => {
 
+  const meter = dailyConsumptionByMeter.find(
+    (m) => m.meterId?.toString() === meterId?.toString()
+  );
+
+  return meter ? Number(meter.consumption || 0) : 0;
+};
   /* ================= RENDER ================= */
 
  return (
@@ -423,6 +462,58 @@ const usersForDropdown =
         )}
       </CardContent>
     </Card>
+    <Card className="mt-6">
+  <CardHeader>
+    <CardTitle>Consumers Water Usage</CardTitle>
+    <CardDescription>
+      Real-time usage per meter
+    </CardDescription>
+  </CardHeader>
+
+  <CardContent>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Name</TableHead>
+          <TableHead>Meter</TableHead>
+          <TableHead>Email</TableHead>
+          <TableHead>Total Usage</TableHead>
+        </TableRow>
+      </TableHeader>
+
+      <TableBody>
+        {filteredConsumers.map((consumer) => (
+          <TableRow key={consumer._id}>
+
+            <TableCell>
+              <div>
+                <p className="font-medium">{consumer.name}</p>
+              </div>
+            </TableCell>
+
+            <TableCell className="font-mono text-sm">
+              {consumer.meterId}
+            </TableCell>
+
+            <TableCell>
+              {consumer.email}
+            </TableCell>
+
+            <TableCell>
+              <div className="flex items-center gap-2">
+                <Droplets className="h-4 w-4 text-primary" />
+                <span className="font-medium">
+                  {formatLiters(getTodayUsage(consumer.meterId))}
+                </span>
+              </div>
+            </TableCell>
+
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </CardContent>
+</Card>
 
   </DashboardLayout>
 );
