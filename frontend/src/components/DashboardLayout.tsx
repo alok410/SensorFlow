@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import logo from "../Imgs/logo.jpeg"
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -52,9 +53,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, navI
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link to="/" className="flex items-center gap-2">
-              <div className="p-2 rounded-lg gradient-primary">
-                <Droplets className="h-5 w-5 text-primary-foreground" />
-              </div>
+              <div className="">
+              <img src={logo} alt="logo" className="h-10 w-25 object-contain" />
+            </div>
               <span className="font-display font-bold text-lg hidden sm:block">Sense Flow</span>
             </Link>
             <span className="text-muted-foreground hidden sm:block">|</span>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { setCurrentUser } from '@/lib/storage';
-
+import logo from "../Imgs/logo.jpeg";
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDashboardPath } from '@/components/ProtectedRoute';
@@ -24,50 +24,50 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-// 1️⃣ Clear auth/session when login page loads (RUNS ONCE)
-useEffect(() => {
-  setCurrentUser(null);
-  localStorage.removeItem('currentUser');
-  localStorage.clear();
+  // 1️⃣ Clear auth/session when login page loads (RUNS ONCE)
+  useEffect(() => {
+    setCurrentUser(null);
+    localStorage.removeItem('currentUser');
+    localStorage.clear();
 
-  sessionStorage.clear();
-}, []);
+    sessionStorage.clear();
+  }, []);
 
-// 2️⃣ Redirect if already logged inn
-useEffect(() => {
-  if (user) {
-    navigate(getDashboardPath(user.role));
-  }
-}, [user, navigate]);
+  // 2️⃣ Redirect if already logged inn
+  useEffect(() => {
+    if (user) {
+      navigate(getDashboardPath(user.role));
+    }
+  }, [user, navigate]);
 
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     const success = await login(email, password);
-    
+
     if (success) {
       // Navigation handled by useEffect
     }
-    
+
     setIsLoading(false);
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!resetEmail.trim()) return;
-    
+
     setIsResetting(true);
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     toast({
       title: "Reset Link Sent",
       description: `If an account exists for ${resetEmail}, you'll receive a password reset link.`,
     });
-    
+
     setForgotPasswordOpen(false);
     setResetEmail('');
     setIsResetting(false);
@@ -85,8 +85,8 @@ useEffect(() => {
       <div className="w-full max-w-md animate-fade-in">
         <div className="flex justify-center mb-8">
           <div className="flex items-center gap-3">
-            <div className="p-3 rounded-xl gradient-primary">
-              <Droplets className="h-8 w-8 text-primary-foreground" />
+            <div className="">
+              <img src={logo} alt="logo" className="h-20 w-20 object-contain" />
             </div>
             <div>
               <h1 className="text-2xl font-display font-bold text-foreground">Sense Flow</h1>
