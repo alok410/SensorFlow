@@ -10,23 +10,23 @@ export const AuthProvider = ({ children }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) setUser(JSON.parse(storedUser));
-    setIsLoading(false);
-  }, []);
+    const isFirstLoad = sessionStorage.getItem("app_loaded");
 
-  // ⭐ ADD THIS USEEFFECT
-  useEffect(() => {
-    const handleTabClose = () => {
+    if (!isFirstLoad) {
+      // Clear old login only when site opens first time
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-    };
 
-    window.addEventListener("beforeunload", handleTabClose);
+      sessionStorage.setItem("app_loaded", "true");
+    }
 
-    return () => {
-      window.removeEventListener("beforeunload", handleTabClose);
-    };
+    // Load user if exists
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+
+    setIsLoading(false);
   }, []);
 
   const login = async (email, password) => {
@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }) => {
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-      
+
       setUser(data.user);
 
       toast({
