@@ -15,7 +15,21 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string, password: string) => {
+  // ⭐ ADD THIS USEEFFECT
+  useEffect(() => {
+    const handleTabClose = () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+    };
+
+    window.addEventListener("beforeunload", handleTabClose);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleTabClose);
+    };
+  }, []);
+
+  const login = async (email, password) => {
     try {
       const data = await loginUser(email, password);
 
@@ -28,9 +42,9 @@ export const AuthProvider = ({ children }) => {
         title: "Login Successful",
         description: `Welcome ${data.user.name}`,
       });
- 
+
       return true;
-    } catch (err: any) {
+    } catch (err) {
       toast({
         title: "Login Failed",
         description: err.response?.data?.message || "Invalid credentials",
