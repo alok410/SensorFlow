@@ -63,13 +63,14 @@ const AdminUsers = () => {
   const [consumerToDelete, setConsumerToDelete] = useState<any>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    meterId: "",
-    locationId: "",
-    password: "",
-  });
+ const [formData, setFormData] = useState({
+  name: "",
+  email: "",
+  meterId: "",
+  serialNumber: "",   // ✅ added
+  locationId: "",
+  password: "",
+});
 
   /* ================= LOAD DATA ================= */
 
@@ -118,27 +119,29 @@ const AdminUsers = () => {
 
   /* ================= FORM ================= */
 
-  const resetForm = () => {
-    setFormData({
-      name: "",
-      email: "",
-      meterId: "",
-      locationId: "",
-      password: "",
-    });
-    setEditingConsumer(null);
-  };
+const resetForm = () => {
+  setFormData({
+    name: "",
+    email: "",
+    meterId: "",
+    serialNumber: "",   // ✅ added
+    locationId: "",
+    password: "",
+  });
+  setEditingConsumer(null);
+};
 
   const openDialog = (consumer?: any) => {
     if (consumer) {
       setEditingConsumer(consumer);
-      setFormData({
-        name: consumer.name,
-        email: consumer.email,
-        meterId: consumer.meterId,
-        locationId: consumer.locationId,
-        password: "",
-      });
+     setFormData({
+  name: consumer.name,
+  email: consumer.email,
+  meterId: consumer.meterId,
+  serialNumber: consumer.serialNumber || "", // ✅ added
+  locationId: consumer.locationId,
+  password: "",
+});
     } else {
       resetForm();
     }
@@ -282,6 +285,7 @@ const AdminUsers = () => {
                         <TableHead>Name</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Location</TableHead>
+                        <TableHead>Serial Number</TableHead>
                         <TableHead>Meter</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead />
@@ -300,6 +304,7 @@ const AdminUsers = () => {
                               )?.name
                             }
                           </TableCell>
+                            <TableCell>{c.serialNumber}</TableCell>
                           <TableCell>{c.meterId}</TableCell>
                           <TableCell>
                             <Badge>
@@ -372,6 +377,14 @@ const AdminUsers = () => {
                 }
                 required
               />
+              <Input
+  placeholder="Serial Number"
+  value={formData.serialNumber}
+  onChange={(e) =>
+    setFormData({ ...formData, serialNumber: e.target.value })
+  }
+  required
+/>
 
               <Select
                 value={formData.locationId}

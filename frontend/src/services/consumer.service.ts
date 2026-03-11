@@ -14,25 +14,26 @@
 
 
   /* =================================
-    CREATE CONSUMER (Admin)
-  =================================*/
-  export const createConsumer = async (data: {
-    email: string;
-    password: string;
-    name: string;
-    phone?: string;
-    locationId?: string;
-    meterId?: string;
-  }) => {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: getAuthHeader(),
-      body: JSON.stringify(data),
-    });
+    /* =================================
+   CREATE CONSUMER (Admin)
+=================================*/
+export const createConsumer = async (data: {
+  email: string;
+  password: string;
+  name: string;
+  phone?: string;
+  locationId?: string;
+  meterId?: string;
+  serialNumber?: string; // ✅ Added
+}) => {
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers: getAuthHeader(),
+    body: JSON.stringify(data),
+  });
 
-    return response.json();
-  };
-
+  return response.json();
+};
 
   /* =================================
     GET ALL CONSUMERS (Admin)

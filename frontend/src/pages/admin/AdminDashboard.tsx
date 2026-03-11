@@ -18,6 +18,7 @@ import {
   getDailyConsumption,
   getLiveMeterData
 } from "@/services/water.service";
+import { log } from 'console';
 
 const adminNavItems = [
   { label: 'Overview', href: '/admin' },
@@ -61,6 +62,8 @@ const [dailyConsumptionByMeter, setDailyConsumptionByMeter] = useState<any[]>([]
   const loadConsumers = async () => {
     try {
       const res = await getConsumers();
+
+      
       const array =
         Array.isArray(res) ? res :
         Array.isArray(res.data) ? res.data :
@@ -476,6 +479,7 @@ const getTodayUsage = (meterId: string) => {
         <TableRow>
           <TableHead>Name</TableHead>
           <TableHead>Meter</TableHead>
+          <TableHead>Serial Number</TableHead>
           <TableHead>Email</TableHead>
           <TableHead>Total Usage</TableHead>
         </TableRow>
@@ -493,6 +497,10 @@ const getTodayUsage = (meterId: string) => {
 
             <TableCell className="font-mono text-sm">
               {consumer.meterId}
+            </TableCell>
+
+             <TableCell className="font-mono text-sm">
+              {consumer.serialNumber}
             </TableCell>
 
             <TableCell>
