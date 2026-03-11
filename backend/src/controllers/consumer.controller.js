@@ -6,7 +6,7 @@ import bcrypt from "bcryptjs";
 =================================*/
 export const createConsumer = async (req, res) => {
   try {
-    const { name, email, password, phone, locationId, meterId } = req.body;
+    const { name, email, password, phone, locationId, meterId, serialNumber } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -32,6 +32,7 @@ export const createConsumer = async (req, res) => {
       phone,
       locationId,
       meterId,
+      serialNumber, // ✅ Added here
       role: "consumer",
     });
 
@@ -45,6 +46,7 @@ export const createConsumer = async (req, res) => {
         phone: consumer.phone,
         locationId: consumer.locationId,
         meterId: consumer.meterId || null,
+        serialNumber: consumer.serialNumber || null, // ✅ Return it
         role: consumer.role,
         createdAt: consumer.createdAt,
       },
@@ -57,8 +59,6 @@ export const createConsumer = async (req, res) => {
     });
   }
 };
-
-
 /* =================================
    ADMIN: GET ALL CONSUMERS
 =================================*/

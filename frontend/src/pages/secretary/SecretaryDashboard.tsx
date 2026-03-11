@@ -101,6 +101,8 @@
                 loc._id?.toString() === loggedSecretary.locationId?.toString()
             );
 
+
+
             if (matchedLocation) {
               setSecretaryLocationName(matchedLocation.name);
             }
@@ -162,6 +164,7 @@
           let start: string;
           let end: string;
 
+
           if (dateFilter === "custom" && startDate && endDate) {
             start = startDate;
             end = endDate;
@@ -194,8 +197,6 @@
             try {
 
               const response = await getDailyConsumption(deviceId, start, end);
-console.log(response);
-
               const dailyArray =
                 Array.isArray(response)
                   ? response

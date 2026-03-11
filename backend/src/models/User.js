@@ -34,15 +34,23 @@ const userSchema = new mongoose.Schema(
       ref: "Location",
     },
 
-meterId: {
-  type: String,
+    meterId: {
+      type: String,
+      sparse: true,
+      required: function () {
+        return this.role === "consumer";
+      },
+    },
 
-  sparse: true, // ⭐ THIS IS THE KEY
-  required: function () {
-    return this.role === "consumer";
-  },
-},
-
+    // ⭐ NEW FIELD
+    serialNumber: {
+      type: String,
+      sparse: true,
+      required: function () {
+        return this.role === "consumer";
+      },
+      trim: true,
+    },
 
     isActive: {
       type: Boolean,
@@ -54,4 +62,4 @@ meterId: {
 
 const User = mongoose.model("User", userSchema);
 
-export default User; // ✅ ES Module default export
+export default User;
