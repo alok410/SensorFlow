@@ -56,7 +56,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, navI
               <div className="">
               <img src={logo} alt="logo" className="h-10 w-25 object-contain" />
             </div>
-              <span className="font-display font-bold text-lg hidden sm:block">Sense Flow</span>
+              <span className="font-display font-bold text-lg hidden sm:block">SenseFlow</span>
             </Link>
             <span className="text-muted-foreground hidden sm:block">|</span>
             <span className="font-medium text-sm sm:text-base">{title}</span>
