@@ -43,6 +43,7 @@ export interface Consumer extends UserBase {
   role: "consumer";
   meterId: string;
   assignedSecretaryId?: string;
+    serialNumber?: string;  
   connectionDate: string;
   locationId: string;       // required
 }

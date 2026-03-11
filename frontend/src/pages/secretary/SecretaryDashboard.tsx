@@ -211,11 +211,9 @@
 
                 if (!groupedByDate[date]) groupedByDate[date] = 0;
                 groupedByDate[date] += value;
-
-           if (!groupedByMeter[deviceId]) {
+if (!groupedByMeter[deviceId]) {
   groupedByMeter[deviceId] = {
-    consumption: 0,
-    serial: response?.serial_number || "-"
+    consumption: 0
   };
 }
 
@@ -232,11 +230,9 @@ groupedByMeter[deviceId].consumption += value;
               reading_date: date,
               consumption: groupedByDate[date],
             }));
-
-         const mergedByMeter = Object.keys(groupedByMeter).map((meterId) => ({
+const mergedByMeter = Object.keys(groupedByMeter).map((meterId) => ({
   meterId,
-  consumption: groupedByMeter[meterId].consumption,
-  serial: groupedByMeter[meterId].serial,
+  consumption: groupedByMeter[meterId].consumption
 }));
 
           setDailyConsumptionByDate(mergedByDate);
@@ -326,13 +322,7 @@ const getTodayUsage = (meterId: string) => {
   return meter ? Number(meter.consumption || 0) : 0;
 };
 
-const getSerialNumber = (meterId: string) => {
-  const meter = dailyConsumptionByMeter.find(
-    (m) => m.meterId?.toString() === meterId?.toString()
-  );
 
-  return meter?.serial || "-";
-};
 
     const handleOpenAddBalance = (consumer: Consumer) => {
       setSelectedConsumer(consumer);
@@ -703,12 +693,11 @@ const getSerialNumber = (meterId: string) => {
     </div>
   </TableCell>
 
-  <TableCell className="font-mono text-sm">
-    <div>
-{getSerialNumber(consumer.meterId)}
-    
-    </div>
-  </TableCell>
+<TableCell className="font-mono text-sm">
+  <div>
+    {consumer.serialNumber || "-"}
+  </div>
+</TableCell>
 
   <TableCell>
     <div className="flex items-center gap-2">
