@@ -200,13 +200,6 @@ for (const deviceId of meterIds) {
       // Merge by date
 
 
-      allDaily.forEach((item) => {
-        const date = item.reading_date;
-        const value = Number(item.consumption || 0);
-
-        if (!grouped[date]) grouped[date] = 0;
-        grouped[date] += value;
-      });
 const mergedMeters = Object.keys(groupedByMeter).map((meterId) => ({
   meterId,
   consumption: groupedByMeter[meterId]
