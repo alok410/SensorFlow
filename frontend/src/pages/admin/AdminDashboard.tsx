@@ -234,7 +234,17 @@ setDailyConsumptionByMeter(mergedMeters);
 useEffect(() => {
   setSelectedUser("all");
 }, [selectedLocation]);
+const [sortColumn, setSortColumn] = useState<string>("name");
+const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
+const handleSort = (column: string) => {
+  if (sortColumn === column) {
+    setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+  } else {
+    setSortColumn(column);
+    setSortDirection("asc");
+  }
+};
   /* ================= DERIVED DATA ================= */
 const usersForDropdown =
   selectedLocation === "all"
@@ -277,6 +287,27 @@ const getTodayUsage = (meterId: string) => {
 
   return meter ? Number(meter.consumption || 0) : 0;
 };
+const sortedConsumers = [...filteredConsumers].sort((a, b) => {
+
+  let valueA: any;
+  let valueB: any;
+
+  if (sortColumn === "usage") {
+    valueA = getTodayUsage(a.meterId);
+    valueB = getTodayUsage(b.meterId);
+  } else {
+    valueA = a[sortColumn] || "";
+    valueB = b[sortColumn] || "";
+  }
+
+  if (typeof valueA === "string") valueA = valueA.toLowerCase();
+  if (typeof valueB === "string") valueB = valueB.toLowerCase();
+
+  if (valueA < valueB) return sortDirection === "asc" ? -1 : 1;
+  if (valueA > valueB) return sortDirection === "asc" ? 1 : -1;
+
+  return 0;
+});
   /* ================= RENDER ================= */
 
  return (
@@ -468,18 +499,34 @@ const getTodayUsage = (meterId: string) => {
 
   <CardContent>
     <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Meter</TableHead>
-          <TableHead>Serial Number</TableHead>
-          <TableHead>Email</TableHead>
-          <TableHead>Total Usage</TableHead>
-        </TableRow>
-      </TableHeader>
+    <TableHeader>
+ <TableRow>
+
+  <TableHead onClick={() => handleSort("name")} className="cursor-pointer">
+    Name {sortColumn === "name" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+  </TableHead>
+
+  <TableHead onClick={() => handleSort("meterId")} className="cursor-pointer">
+    Meter {sortColumn === "meterId" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+  </TableHead>
+
+  <TableHead onClick={() => handleSort("serialNumber")} className="cursor-pointer">
+    Serial Number {sortColumn === "serialNumber" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+  </TableHead>
+
+  <TableHead onClick={() => handleSort("email")} className="cursor-pointer">
+    Email {sortColumn === "email" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+  </TableHead>
+
+  <TableHead onClick={() => handleSort("usage")} className="cursor-pointer">
+    Total Usage {sortColumn === "usage" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+  </TableHead>
+
+</TableRow>
+</TableHeader>
 
       <TableBody>
-        {filteredConsumers.map((consumer) => (
+      {sortedConsumers.map((consumer) => (
           <TableRow key={consumer._id}>
 
             <TableCell>

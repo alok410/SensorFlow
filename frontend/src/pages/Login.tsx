@@ -88,7 +88,7 @@ const Login: React.FC = () => {
             <div className="">
               <img src={logo} alt="logo" className="h-20 w-20 object-contain" />
             </div>
-            <div>
+            <div> 
               <h1 className="text-2xl font-display font-bold text-foreground">SenseFlow</h1>
               <p className="text-sm text-muted-foreground">Water Management System</p>
             </div>
