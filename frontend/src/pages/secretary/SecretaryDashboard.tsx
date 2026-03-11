@@ -408,7 +408,37 @@ const getTodayUsage = (meterId: string) => {
       .sort((a, b) => b.usage - a.usage)
       .slice(0, 5);
 
+const [sortColumn, setSortColumn] = useState<string>("name");
+const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
+const handleSort = (column: string) => {
+  if (sortColumn === column) {
+    setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+  } else {
+    setSortColumn(column);
+    setSortDirection("asc");
+  }
+};
+const sortedConsumers = [...assignedConsumers].sort((a, b) => {
+  let valueA: any;
+  let valueB: any;
+
+  if (sortColumn === "usage") {
+    valueA = getTodayUsage(a.meterId);
+    valueB = getTodayUsage(b.meterId);
+  } else {
+    valueA = a[sortColumn] || "";
+    valueB = b[sortColumn] || "";
+  }
+
+  if (typeof valueA === "string") valueA = valueA.toLowerCase();
+  if (typeof valueB === "string") valueB = valueB.toLowerCase();
+
+  if (valueA < valueB) return sortDirection === "asc" ? -1 : 1;
+  if (valueA > valueB) return sortDirection === "asc" ? 1 : -1;
+
+  return 0;
+});
 
     return (
       <DashboardLayout navItems={secretaryNavItems} title="Secretary Dashboard">
@@ -664,18 +694,33 @@ const getTodayUsage = (meterId: string) => {
               </CardHeader>
               <CardContent>
                 <Table>
-            <TableHeader>
+          <TableHeader>
   <TableRow>
-    <TableHead>Name</TableHead>
-    <TableHead>Meter</TableHead>
-    <TableHead>Serial Number</TableHead>
 
-    <TableHead>Total Usage</TableHead>
-    <TableHead className="text-right">Actions</TableHead>
+    <TableHead onClick={() => handleSort("name")} className="cursor-pointer">
+      Name {sortColumn === "name" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+    </TableHead>
+
+    <TableHead onClick={() => handleSort("meterId")} className="cursor-pointer">
+      Meter {sortColumn === "meterId" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+    </TableHead>
+
+    <TableHead onClick={() => handleSort("serialNumber")} className="cursor-pointer">
+      Serial Number {sortColumn === "serialNumber" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+    </TableHead>
+
+    <TableHead onClick={() => handleSort("usage")} className="cursor-pointer">
+      Total Usage {sortColumn === "usage" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+    </TableHead>
+
+    <TableHead className="text-right">
+      Actions
+    </TableHead>
+
   </TableRow>
 </TableHeader>
                   <TableBody>
-                    {assignedConsumers.map((consumer) => {
+                   {sortedConsumers.map((consumer) => {
                       const todayUsage = getTodayUsage(consumer.meterId);
                       return (
                       <TableRow key={consumer._id}>
