@@ -62,5 +62,6 @@ export const getHistoricalReadings = async (
   const { data } = await api.get(`/history/all`, {
     params: { device: deviceId, start, end },
   });
+  
   return data;
 };

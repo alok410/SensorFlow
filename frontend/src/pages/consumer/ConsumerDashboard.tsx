@@ -151,7 +151,6 @@ const ConsumerDashboard: React.FC = () => {
   }, [consumer?._id, token]);
 
   /* ================= FETCH READINGS ================= */
-/* ================= FETCH READINGS ================= */
 useEffect(() => {
   if (!consumer || !startDate || !endDate) return;
 
@@ -179,15 +178,89 @@ useEffect(() => {
       let mergedReadings = [...dbReadings];
       
       /* 2️⃣ Fetch today's live readings from Senseflow */
-      const today = new Date();
-      const tomorrow = new Date(today.getTime() + 86400000);
-      
-      const apiData = await getHistoricalReadings(
-        consumer.meterId,
-        format(today, 'yyyy-MM-dd'),
-        format(tomorrow, 'yyyy-MM-dd')
-      );
-      console.log("apidata:",apiData);
+   const today = new Date();
+const todayStr = format(today, 'yyyy-MM-dd');
+
+/* fetch last 3 days instead of only today */
+const startSenseflow = format(subMonths(today, 0), 'yyyy-MM-dd'); // today
+const past3Days = new Date(today.getTime() - 3 * 86400000);
+
+let apiData: any = null;
+
+try {
+
+  apiData = await getHistoricalReadings(
+    consumer.meterId,
+    format(past3Days, 'yyyy-MM-dd'),
+    format(today, 'yyyy-MM-dd')
+  );
+
+} catch (err) {
+
+  console.log("Senseflow API failed or no data for today");
+
+}
+
+/* filter only today's readings */
+const todayReadings =
+  apiData?.data?.filter((r: any) =>
+    r.reading_datetime.startsWith(todayStr)
+  ) || [];
+
+const exists = mergedReadings.some(
+  (r) => r.readingDate === todayStr
+);
+
+if (!exists) {
+
+  if (todayReadings.length >= 1) {
+
+    const sorted = [...todayReadings].sort(
+      (a, b) =>
+        new Date(a.reading_datetime).getTime() -
+        new Date(b.reading_datetime).getTime()
+    );
+
+    const earliest = sorted[0];
+    const latest = sorted[sorted.length - 1];
+
+    const opening = Number(earliest.meter_reading);
+    const closing = Number(latest.meter_reading);
+
+    const consumption =
+      sorted.length > 1
+        ? (closing - opening) * 1000
+        : 0;
+
+    mergedReadings.push({
+      _id: 'today-reading',
+      consumerId: consumer._id,
+      meterId: consumer.meterId,
+      source: 'smart_meter',
+      readingDate: todayStr,
+      reading: closing,
+      previousReading: opening,
+      consumption: consumption,
+    });
+
+  } else {
+
+    /* today data not found */
+
+    mergedReadings.push({
+      _id: 'today-reading-missing',
+      consumerId: consumer._id,
+      meterId: consumer.meterId,
+      source: 'smart_meter',
+      readingDate: todayStr,
+      reading: 0,
+      previousReading: 0,
+      consumption: 0,
+    });
+
+  }
+
+}
 
       if (apiData?.data?.length >= 1) {
 
