@@ -62,12 +62,15 @@ const AdminUsers = () => {
 
   const [consumerToDelete, setConsumerToDelete] = useState<any>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [sortColumn, setSortColumn] = useState<string>("blockId");
+const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
  const [formData, setFormData] = useState({
   name: "",
   email: "",
   meterId: "",
-  serialNumber: "",   // ✅ added
+  serialNumber: "",
+    blockId: "",     // ✅ added
   locationId: "",
   password: "",
 });
@@ -116,6 +119,34 @@ const AdminUsers = () => {
 
     return matchesSearch && matchesLocation;
   });
+  const sortedConsumers = [...filteredConsumers].sort((a, b) => {
+  let valueA: any;
+  let valueB: any;
+
+  if (sortColumn === "blockId") {
+    const numA = parseInt(a.blockId);
+    const numB = parseInt(b.blockId);
+
+    if (!isNaN(numA) && !isNaN(numB)) {
+      valueA = numA;
+      valueB = numB;
+    } else {
+      valueA = a.blockId || "";
+      valueB = b.blockId || "";
+    }
+  } else {
+    valueA = a[sortColumn] || "";
+    valueB = b[sortColumn] || "";
+  }
+
+  if (typeof valueA === "string") valueA = valueA.toLowerCase();
+  if (typeof valueB === "string") valueB = valueB.toLowerCase();
+
+  if (valueA < valueB) return sortDirection === "asc" ? -1 : 1;
+  if (valueA > valueB) return sortDirection === "asc" ? 1 : -1;
+
+  return 0;
+});
 
   /* ================= FORM ================= */
 
@@ -124,7 +155,8 @@ const resetForm = () => {
     name: "",
     email: "",
     meterId: "",
-    serialNumber: "",   // ✅ added
+    serialNumber: "",
+    blockId: "",     // ✅ added
     locationId: "",
     password: "",
   });
@@ -138,7 +170,8 @@ const resetForm = () => {
   name: consumer.name,
   email: consumer.email,
   meterId: consumer.meterId,
-  serialNumber: consumer.serialNumber || "", // ✅ added
+  serialNumber: consumer.serialNumber || "",
+  blockId: consumer.blockId || "",
   locationId: consumer.locationId,
   password: "",
 });
@@ -170,7 +203,14 @@ const resetForm = () => {
       });
     }
   };
-
+const handleSort = (column: string) => {
+  if (sortColumn === column) {
+    setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+  } else {
+    setSortColumn(column);
+    setSortDirection("asc");
+  }
+};
   /* ================= DELETE ================= */
 
   const handleDelete = async () => {
@@ -281,20 +321,58 @@ const resetForm = () => {
                 ) : (
                   <Table>
                     <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Location</TableHead>
-                        <TableHead>Serial Number</TableHead>
-                        <TableHead>Meter</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead />
-                      </TableRow>
-                    </TableHeader>
+  <TableRow>
+
+    <TableHead
+      onClick={() => handleSort("blockId")}
+      className="cursor-pointer select-none"
+    >
+      Block {sortColumn === "blockId" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+    </TableHead>
+
+    <TableHead
+      onClick={() => handleSort("name")}
+      className="cursor-pointer select-none"
+    >
+      Name {sortColumn === "name" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+    </TableHead>
+
+    <TableHead
+      onClick={() => handleSort("meterId")}
+      className="cursor-pointer select-none"
+    >
+      Meter {sortColumn === "meterId" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+    </TableHead>
+
+    <TableHead
+      onClick={() => handleSort("serialNumber")}
+      className="cursor-pointer select-none"
+    >
+      Serial Number {sortColumn === "serialNumber" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+    </TableHead>
+
+    <TableHead
+      onClick={() => handleSort("email")}
+      className="cursor-pointer select-none"
+    >
+      Email {sortColumn === "email" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+    </TableHead>
+
+    <TableHead
+      onClick={() => handleSort("usage")}
+      className="cursor-pointer select-none"
+    >
+      Total Usage {sortColumn === "usage" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+    </TableHead>
+
+  </TableRow>
+</TableHeader>
 
                     <TableBody>
-                      {filteredConsumers.map((c) => (
+                      {sortedConsumers.map((c) => (
                         <TableRow key={c._id}>
+                          <TableCell>{c.blockId}</TableCell>
+
                           <TableCell>{c.name}</TableCell>
                           <TableCell>{c.email}</TableCell>
                           <TableCell>
@@ -384,6 +462,13 @@ const resetForm = () => {
     setFormData({ ...formData, serialNumber: e.target.value })
   }
   required
+/>
+<Input
+  placeholder="Block ID"
+  value={formData.blockId}
+  onChange={(e) =>
+    setFormData({ ...formData, blockId: e.target.value })
+  }
 />
 
               <Select

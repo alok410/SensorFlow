@@ -288,14 +288,26 @@ const getTodayUsage = (meterId: string) => {
   return meter ? Number(meter.consumption || 0) : 0;
 };
 const sortedConsumers = [...filteredConsumers].sort((a, b) => {
-
   let valueA: any;
   let valueB: any;
 
   if (sortColumn === "usage") {
     valueA = getTodayUsage(a.meterId);
     valueB = getTodayUsage(b.meterId);
-  } else {
+  } 
+  else if (sortColumn === "blockId") {
+    const numA = parseInt(a.blockId);
+    const numB = parseInt(b.blockId);
+
+    if (!isNaN(numA) && !isNaN(numB)) {
+      valueA = numA;
+      valueB = numB;
+    } else {
+      valueA = a.blockId || "";
+      valueB = b.blockId || "";
+    }
+  } 
+  else {
     valueA = a[sortColumn] || "";
     valueB = b[sortColumn] || "";
   }
@@ -501,7 +513,9 @@ const sortedConsumers = [...filteredConsumers].sort((a, b) => {
     <Table>
     <TableHeader>
  <TableRow>
-
+<TableHead onClick={() => handleSort("blockId")} className="cursor-pointer">
+  Block {sortColumn === "blockId" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+</TableHead>
   <TableHead onClick={() => handleSort("name")} className="cursor-pointer">
     Name {sortColumn === "name" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
   </TableHead>
@@ -528,6 +542,13 @@ const sortedConsumers = [...filteredConsumers].sort((a, b) => {
       <TableBody>
       {sortedConsumers.map((consumer) => (
           <TableRow key={consumer._id}>
+
+
+                <TableCell>
+              <div>
+                <p className="font-medium">{consumer.blockId}</p>
+              </div>
+            </TableCell>
 
             <TableCell>
               <div>
