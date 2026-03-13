@@ -33,6 +33,7 @@ export const createConsumer = async (req, res) => {
       locationId,
       meterId,
       serialNumber, // ✅ Added here
+      blockId,
       role: "consumer",
     });
 
@@ -46,7 +47,8 @@ export const createConsumer = async (req, res) => {
         phone: consumer.phone,
         locationId: consumer.locationId,
         meterId: consumer.meterId || null,
-        serialNumber: consumer.serialNumber || null, // ✅ Return it
+        serialNumber: consumer.serialNumber || null,
+        blockId: consumer.blockId || null, // ✅ Return it
         role: consumer.role,
         createdAt: consumer.createdAt,
       },

@@ -41,6 +41,13 @@ const userSchema = new mongoose.Schema(
         return this.role === "consumer";
       },
     },
+      blockId: {
+      type: String,
+      sparse: true,
+      required: function () {
+        return this.role === "consumer";
+      },
+    },
 
     // ⭐ NEW FIELD
     serialNumber: {
