@@ -337,12 +337,17 @@ const handleSort = (column: string) => {
     >
       Name {sortColumn === "name" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
     </TableHead>
-
-    <TableHead
-      onClick={() => handleSort("meterId")}
+        <TableHead
+      onClick={() => handleSort("email")}
       className="cursor-pointer select-none"
     >
-      Meter {sortColumn === "meterId" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+      Email {sortColumn === "email" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+    </TableHead>
+        <TableHead
+      onClick={() => handleSort("CityName")}
+      className="cursor-pointer select-none"
+    >
+      CityName {sortColumn === "CityName" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
     </TableHead>
 
     <TableHead
@@ -353,17 +358,20 @@ const handleSort = (column: string) => {
     </TableHead>
 
     <TableHead
-      onClick={() => handleSort("email")}
+      onClick={() => handleSort("meterId")}
       className="cursor-pointer select-none"
     >
-      Email {sortColumn === "email" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+      Meter {sortColumn === "meterId" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
     </TableHead>
+
+
+
 
     <TableHead
       onClick={() => handleSort("usage")}
       className="cursor-pointer select-none"
     >
-      Total Usage {sortColumn === "usage" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
+      Status {sortColumn === "usage" ? (sortDirection === "asc" ? "↑" : "↓") : ""}
     </TableHead>
 
   </TableRow>
