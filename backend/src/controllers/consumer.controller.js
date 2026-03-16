@@ -3,10 +3,18 @@ import bcrypt from "bcryptjs";
 
 /* =================================
    ADMIN: CREATE CONSUMER
-=================================*/
-export const createConsumer = async (req, res) => {
+=================================*/export const createConsumer = async (req, res) => {
   try {
-    const { name, email, password, phone, locationId, meterId, serialNumber } = req.body;
+    const { 
+      name, 
+      email, 
+      password, 
+      phone, 
+      locationId, 
+      meterId, 
+      serialNumber,
+      blockId   // ✅ ADD THIS
+    } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -16,6 +24,7 @@ export const createConsumer = async (req, res) => {
     }
 
     const existingUser = await User.findOne({ email });
+
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -32,8 +41,8 @@ export const createConsumer = async (req, res) => {
       phone,
       locationId,
       meterId,
-      serialNumber, // ✅ Added here
-      blockId,
+      serialNumber,
+      blockId,   // ✅ now defined
       role: "consumer",
     });
 
@@ -48,13 +57,15 @@ export const createConsumer = async (req, res) => {
         locationId: consumer.locationId,
         meterId: consumer.meterId || null,
         serialNumber: consumer.serialNumber || null,
-        blockId: consumer.blockId || null, // ✅ Return it
+        blockId: consumer.blockId || null,
         role: consumer.role,
         createdAt: consumer.createdAt,
       },
     });
 
   } catch (error) {
+    console.error("Create consumer error:", error);
+
     res.status(500).json({
       success: false,
       message: error.message,
