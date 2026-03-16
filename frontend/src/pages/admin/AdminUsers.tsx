@@ -190,6 +190,7 @@ const resetForm = () => {
         toast({ title: "Consumer Updated" });
       } else {
         await createConsumer(formData);
+        
         toast({ title: "Consumer Created" });
       }
 
