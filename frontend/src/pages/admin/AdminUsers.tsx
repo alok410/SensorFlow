@@ -64,7 +64,8 @@ const AdminUsers = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [sortColumn, setSortColumn] = useState<string>("blockId");
 const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-
+const [submitting, setSubmitting] = useState(false);
+const [deleting, setDeleting] = useState(false);
  const [formData, setFormData] = useState({
   name: "",
   email: "",
@@ -182,28 +183,31 @@ const resetForm = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      if (editingConsumer) {
-        await updateConsumer(editingConsumer._id, formData);
-        toast({ title: "Consumer Updated" });
-      } else {
-        await createConsumer(formData);
-        
-        toast({ title: "Consumer Created" });
-      }
+  try {
+    setSubmitting(true);
 
-      await loadData();
-      setIsDialogOpen(false);
-      resetForm();
-    } catch {
-      toast({
-        title: "Operation Failed",
-        variant: "destructive",
-      });
+    if (editingConsumer) {
+      await updateConsumer(editingConsumer._id, formData);
+      toast({ title: "Consumer Updated" });
+    } else {
+      await createConsumer(formData);
+      toast({ title: "Consumer Created" });
     }
-  };
+
+    await loadData();
+    setIsDialogOpen(false);
+    resetForm();
+  } catch {
+    toast({
+      title: "Operation Failed",
+      variant: "destructive",
+    });
+  } finally {
+    setSubmitting(false);
+  }
+};
 const handleSort = (column: string) => {
   if (sortColumn === column) {
     setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -214,24 +218,28 @@ const handleSort = (column: string) => {
 };
   /* ================= DELETE ================= */
 
-  const handleDelete = async () => {
-    if (!consumerToDelete) return;
+ const handleDelete = async () => {
+  if (!consumerToDelete) return;
 
-    try {
-      await deleteConsumer(consumerToDelete._id);
+  try {
+    setDeleting(true);
 
-      toast({ title: "Consumer Deleted" });
+    await deleteConsumer(consumerToDelete._id);
 
-      await loadData();
-      setIsDeleteDialogOpen(false);
-      setConsumerToDelete(null);
-    } catch {
-      toast({
-        title: "Delete Failed",
-        variant: "destructive",
-      });
-    }
-  };
+    toast({ title: "Consumer Deleted" });
+
+    await loadData();
+    setIsDeleteDialogOpen(false);
+    setConsumerToDelete(null);
+  } catch {
+    toast({
+      title: "Delete Failed",
+      variant: "destructive",
+    });
+  } finally {
+    setDeleting(false);
+  }
+};
 
   /* ================= UI ================= */
 
@@ -511,9 +519,18 @@ const handleSort = (column: string) => {
               )}
 
               <DialogFooter>
-                <Button type="submit">
-                  {editingConsumer ? "Update" : "Create"}
-                </Button>
+              <Button type="submit" disabled={submitting}>
+  {submitting ? (
+    <div className="flex items-center gap-2">
+      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+      Processing...
+    </div>
+  ) : editingConsumer ? (
+    "Update"
+  ) : (
+    "Create"
+  )}
+</Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -542,9 +559,16 @@ const handleSort = (column: string) => {
                 Cancel
               </Button>
 
-              <Button variant="destructive" onClick={handleDelete}>
-                Delete
-              </Button>
+             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+  {deleting ? (
+    <div className="flex items-center gap-2">
+      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+      Deleting...
+    </div>
+  ) : (
+    "Delete"
+  )}
+</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
