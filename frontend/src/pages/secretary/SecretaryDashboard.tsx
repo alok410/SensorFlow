@@ -260,6 +260,7 @@ const mergedByMeter = Object.keys(groupedByMeter).map((meterId) => ({
       date: d.reading_date,
       consumption: Number(d.consumption || 0), // convert to liters
     }));
+    
     const assignedInvoices = invoices.filter(inv => assignedConsumerIds.includes(inv.consumerId));
     const assignedReadings = meterReadings.filter(r => assignedConsumerIds.includes(r.consumerId));
 
@@ -539,7 +540,7 @@ const sortedConsumers = [...assignedConsumers].sort((a, b) => {
               </CardContent>
             </Card>
             {/* Water Usage Analytics Section */}
-            <div className="grid gap-4 md:grid-cols-2">
+          
               <Card>
                 <CardHeader>
                   <CardTitle>Water Consumption Trend</CardTitle>
@@ -588,56 +589,13 @@ const sortedConsumers = [...assignedConsumers].sort((a, b) => {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Droplets className="h-5 w-5 text-primary" />
-                    Usage Distribution
-                  </CardTitle>
-                  <CardDescription>Free tier vs chargeable consumption</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px]">
-                    {totalConsumption > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={usageDistribution}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={100}
-                            paddingAngle={5}
-                            dataKey="value"
-                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                          >
-                            {usageDistribution.map((_, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip
-                            formatter={(value: number) => [`${value.toLocaleString()} L`, '']}
-                            contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
-                          />
-                          <Legend />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div className="h-full flex items-center justify-center text-muted-foreground">
-                        No usage data available
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-4 p-3 bg-muted/50 rounded-lg text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Free Tier Limit:</span>
-                      <span className="font-medium">{freeTierLimit.toLocaleString()} L per user</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+           
 
-              <Card>
+              
+
+
+        
+<Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <BarChart3 className="h-5 w-5 text-primary" />
@@ -652,28 +610,25 @@ const sortedConsumers = [...assignedConsumers].sort((a, b) => {
                   <div className="h-[300px]">
                     {top5UsageData.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={top5UsageData}>
-                          <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                       <BarChart data={top5UsageData} layout="vertical">
+  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
 
-                          <XAxis dataKey="name" />
+  <XAxis type="number" />
+  <YAxis dataKey="name" type="category" width={80} />
 
-                          <YAxis
-                            tickFormatter={(value) => value.toLocaleString()}
-                          />
+  <Tooltip
+    formatter={(value: number) => [
+      `${value.toLocaleString()} L`,
+      "Usage",
+    ]}
+  />
 
-                          <Tooltip
-                            formatter={(value: number) => [
-                              `${value.toLocaleString()} L`,
-                              "Usage",
-                            ]}
-                          />
-
-                          <Bar
-                            dataKey="usage"
-                            fill="#2563eb"
-                            radius={[8, 8, 0, 0]}
-                          />
-                        </BarChart>
+  <Bar
+    dataKey="usage"
+    fill="#2563eb"
+    radius={[0, 8, 8, 0]} // rounded right side
+  />
+</BarChart>
                       </ResponsiveContainer>
                     ) : (
                       <div className="h-full flex items-center justify-center text-muted-foreground">
@@ -683,10 +638,6 @@ const sortedConsumers = [...assignedConsumers].sort((a, b) => {
                   </div>
                 </CardContent>
               </Card>
-
-
-            </div>
-
             <Card>
               <CardHeader>
                 <CardTitle>Assigned Consumers</CardTitle>
