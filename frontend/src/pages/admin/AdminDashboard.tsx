@@ -206,11 +206,12 @@ const mergedMeters = Object.keys(groupedByMeter).map((meterId) => ({
 }));
 
 setDailyConsumptionByMeter(mergedMeters);
-      const merged = Object.keys(grouped).map((date) => ({
-        reading_date: date,
-        consumption: grouped[date],
-      }));
-
+    const merged = Object.keys(grouped)
+  .sort((a, b) => new Date(a).getTime() - new Date(b).getTime()) // 🔥 SORT HERE
+  .map((date) => ({
+    reading_date: date,
+    consumption: grouped[date],
+  }));
       setDailyConsumption(merged);
       setLiveData(lastLiveData);
 
