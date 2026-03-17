@@ -81,25 +81,61 @@ const AdminSecretaries = () => {
     if (Array.isArray(res?.data?.data)) return res.data.data;
     return [];
   };
+const loadSecretaries = async () => {
+  try {
+    const cached = localStorage.getItem("secretaries");
 
-  const loadSecretaries = async () => {
-    try {
-      const res = await getAllSecretaries();
-      setSecretaries(extractArray(res));
-    } catch {
-      setSecretaries([]);
+    if (cached) {
+      const data = JSON.parse(cached);
+      console.log("📦 Secretaries from cache:", data);
+      setSecretaries(data);
+      return;
     }
-  };
 
-  const loadLocations = async () => {
-    try {
-      const res = await getLocations();
-      setLocations(extractArray(res));
-    } catch {
-      setLocations([]);
+    const res = await getAllSecretaries();
+    const data = extractArray(res);
+
+    console.log("🌐 Secretaries from API:", data);
+
+    setSecretaries(data);
+
+    // ✅ store only if valid
+    if (data.length > 0) {
+      localStorage.setItem("secretaries", JSON.stringify(data));
     }
-  };
 
+  } catch (err) {
+    console.error("❌ Secretaries error:", err);
+    setSecretaries([]);
+  }
+};
+const loadLocations = async () => {
+  try {
+    const cached = localStorage.getItem("locations");
+
+    if (cached) {
+      const data = JSON.parse(cached);
+      console.log("📦 Locations from cache:", data);
+      setLocations(data);
+      return;
+    }
+
+    const res = await getLocations();
+    const data = extractArray(res);
+
+    console.log("🌐 Locations from API:", data);
+
+    setLocations(data);
+
+    if (data.length > 0) {
+      localStorage.setItem("locations", JSON.stringify(data));
+    }
+
+  } catch (err) {
+    console.error("❌ Locations error:", err);
+    setLocations([]);
+  }
+};
   useEffect(() => {
     const loadData = async () => {
       try {

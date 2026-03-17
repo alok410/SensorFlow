@@ -85,24 +85,48 @@ const [deleting, setDeleting] = useState(false);
     return [];
   };
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
+ const loadData = async () => {
+  try {
+    setLoading(true);
 
-      const [consRes, locRes] = await Promise.all([
-        getConsumers(),
-        getLocations(),
-      ]);
+    // ✅ TRY CACHE FIRST
+    const cachedConsumers = localStorage.getItem("consumers");
+    const cachedLocations = localStorage.getItem("locations");
 
-      setConsumers(extractArray(consRes));
-      setLocations(extractArray(locRes));
-    } catch {
-      setConsumers([]);
-      setLocations([]);
-    } finally {
-      setLoading(false);
+    let consumersData = [];
+    let locationsData = [];
+
+    if (cachedConsumers) {
+      consumersData = JSON.parse(cachedConsumers);
+      console.log("📦 Consumers from cache:", consumersData);
+    } else {
+      const res = await getConsumers();
+      consumersData = extractArray(res);
+      localStorage.setItem("consumers", JSON.stringify(consumersData));
+      console.log("🌐 Consumers from API:", consumersData);
     }
-  };
+
+    if (cachedLocations) {
+      locationsData = JSON.parse(cachedLocations);
+      console.log("📦 Locations from cache:", locationsData);
+    } else {
+      const res = await getLocations();
+      locationsData = extractArray(res);
+      localStorage.setItem("locations", JSON.stringify(locationsData));
+      console.log("🌐 Locations from API:", locationsData);
+    }
+
+    setConsumers(consumersData);
+    setLocations(locationsData);
+
+  } catch (err) {
+    console.error("❌ Load error:", err);
+    setConsumers([]);
+    setLocations([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     loadData();

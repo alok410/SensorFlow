@@ -59,50 +59,77 @@ const AdminDashboard: React.FC = () => {
     ]);
   };
 
-  const loadConsumers = async () => {
-    try {
-      const res = await getConsumers();
+ const loadConsumers = async () => {
+  try {
+    const cached = localStorage.getItem("consumers");
 
-
-      const array =
-        Array.isArray(res) ? res :
-          Array.isArray(res.data) ? res.data :
-            Array.isArray(res.data?.data) ? res.data.data :
-              [];
-      setConsumers(array);
-    } catch {
-      setConsumers([]);
+    if (cached) {
+      setConsumers(JSON.parse(cached));
+      return; // 🚀 STOP API CALL
     }
-  };
 
-  const loadSecretaries = async () => {
-    try {
-      const res = await getAllSecretaries();
-      const array =
-        Array.isArray(res) ? res :
-          Array.isArray(res.data) ? res.data :
-            Array.isArray(res.data?.data) ? res.data.data :
-              [];
-      setSecretaries(array);
-    } catch {
-      setSecretaries([]);
+    const res = await getConsumers();
+
+    const array =
+      Array.isArray(res) ? res :
+      Array.isArray(res.data) ? res.data :
+      Array.isArray(res.data?.data) ? res.data.data :
+      [];
+
+    setConsumers(array);
+
+    localStorage.setItem("consumers", JSON.stringify(array)); // 💾 SAVE
+  } catch {
+    setConsumers([]);
+  }
+};
+
+ const loadSecretaries = async () => {
+  try {
+    const cached = localStorage.getItem("secretaries");
+
+    if (cached) {
+      setSecretaries(JSON.parse(cached));
+      return;
     }
-  };
 
-  const loadLocations = async () => {
-    try {
-      const res = await getLocations();
-      const array =
-        Array.isArray(res) ? res :
-          Array.isArray(res.data) ? res.data :
-            Array.isArray(res.data?.data) ? res.data.data :
-              [];
-      setLocations(array);
-    } catch {
-      setLocations([]);
+    const res = await getAllSecretaries();
+
+    const array =
+      Array.isArray(res) ? res :
+      Array.isArray(res.data) ? res.data :
+      Array.isArray(res.data?.data) ? res.data.data :
+      [];
+
+    setSecretaries(array);
+    localStorage.setItem("secretaries", JSON.stringify(array));
+  } catch {
+    setSecretaries([]);
+  }
+};
+const loadLocations = async () => {
+  try {
+    const cached = localStorage.getItem("locations");
+
+    if (cached) {
+      setLocations(JSON.parse(cached));
+      return;
     }
-  };
 
+    const res = await getLocations();
+
+    const array =
+      Array.isArray(res) ? res :
+      Array.isArray(res.data) ? res.data :
+      Array.isArray(res.data?.data) ? res.data.data :
+      [];
+
+    setLocations(array);
+    localStorage.setItem("locations", JSON.stringify(array));
+  } catch {
+    setLocations([]);
+  }
+};
   /* ================= DATE RANGE ================= */
 
   const getDateRange = () => {
@@ -122,7 +149,9 @@ const AdminDashboard: React.FC = () => {
       end: today.toISOString().split("T")[0],
     };
   };
+const { start, end } = getDateRange();
 
+const cacheKey = `waterData_${selectedLocation}_${selectedUser}_${start}_${end}`;
   /* ================= FETCH WATER DATA ================= */
   useEffect(() => {
     if (!consumers?.length) return;
@@ -130,97 +159,125 @@ const AdminDashboard: React.FC = () => {
     const { start, end } = getDateRange();
 
     const fetchAllData = async () => {
-      try {
-        setLoadingWater(true);
+  const { start, end } = getDateRange();
 
-        // STEP 1: Filter by location
-        let filtered =
-          selectedLocation === "all"
-            ? consumers
-            : consumers.filter(
-              (c) =>
-                c.locationId?.toString() ===
-                selectedLocation?.toString()
-            );
+  const cacheKey = `waterData_${selectedLocation}_${selectedUser}_${start}_${end}`;
 
-        // STEP 2: If specific user selected → override
-        if (selectedUser !== "all") {
-          filtered = filtered.filter(
-            (c) => c._id?.toString() === selectedUser?.toString()
+  try {
+    setLoadingWater(true);
+
+    /* ================= CACHE CHECK ================= */
+    const cached = localStorage.getItem(cacheKey);
+
+    if (cached) {
+      const parsed = JSON.parse(cached);
+
+      console.log("⚡ Loaded from cache");
+
+      setDailyConsumption(parsed.dailyConsumption);
+      setDailyConsumptionByMeter(parsed.dailyConsumptionByMeter);
+      setLiveData(parsed.liveData);
+
+      setLoadingWater(false);
+      return; // 🚀 STOP API CALL
+    }
+
+    console.log("🌐 Fetching from API");
+
+    /* ================= FILTER USERS ================= */
+    let filtered =
+      selectedLocation === "all"
+        ? consumers
+        : consumers.filter(
+            (c) =>
+              c.locationId?.toString() ===
+              selectedLocation?.toString()
           );
-        }
 
-        const meterIds = filtered
-          .map((c) => c.meterId)
-          .filter(Boolean);
+    if (selectedUser !== "all") {
+      filtered = filtered.filter(
+        (c) => c._id?.toString() === selectedUser?.toString()
+      );
+    }
 
-        if (!meterIds.length) {
-          setDailyConsumption([]);
-          return;
-        }
+    const meterIds = filtered
+      .map((c) => c.meterId)
+      .filter(Boolean);
 
-        let allDaily: any[] = [];
-        let lastLiveData: any = null;
+    if (!meterIds.length) {
+      setDailyConsumption([]);
+      setLoadingWater(false);
+      return;
+    }
 
-        const grouped: Record<string, number> = {};
-        const groupedByMeter: Record<string, number> = {};
+    const grouped: Record<string, number> = {};
+    const groupedByMeter: Record<string, number> = {};
 
-        for (const deviceId of meterIds) {
+    let lastLiveData: any = null;
 
-          const daily = await getDailyConsumption(deviceId, start, end);
-          const live = await getLiveMeterData(deviceId);
+    /* ================= API CALLS ================= */
+    for (const deviceId of meterIds) {
+      const daily = await getDailyConsumption(deviceId, start, end);
+      const live = await getLiveMeterData(deviceId);
 
-          const dailyArray =
-            Array.isArray(daily) ? daily :
-              Array.isArray(daily?.data) ? daily.data :
-                [];
+      const dailyArray =
+        Array.isArray(daily)
+          ? daily
+          : Array.isArray(daily?.data)
+          ? daily.data
+          : [];
 
-          // IMPORTANT: push into allDaily
-          allDaily = [...allDaily, ...dailyArray];
+      dailyArray.forEach((item: any) => {
+        const date = item.reading_date;
+        const value = Number(item.consumption || 0);
 
-          dailyArray.forEach((item: any) => {
+        if (!grouped[date]) grouped[date] = 0;
+        grouped[date] += value;
 
-            const date = item.reading_date;
-            const value = Number(item.consumption || 0);
+        if (!groupedByMeter[deviceId]) groupedByMeter[deviceId] = 0;
+        groupedByMeter[deviceId] += value;
+      });
 
-            // GROUP BY DATE
-            if (!grouped[date]) grouped[date] = 0;
-            grouped[date] += value;
+      lastLiveData = live?.data || live || null;
+    }
 
-            // GROUP BY METER
-            if (!groupedByMeter[deviceId]) groupedByMeter[deviceId] = 0;
-            groupedByMeter[deviceId] += value;
+    /* ================= FORMAT DATA ================= */
 
-          });
+    const mergedMeters = Object.keys(groupedByMeter).map((meterId) => ({
+      meterId,
+      consumption: groupedByMeter[meterId],
+    }));
 
-          lastLiveData = live?.data || live || null;
-        }
+    const merged = Object.keys(grouped)
+      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+      .map((date) => ({
+        reading_date: date,
+        consumption: grouped[date],
+      }));
 
+    /* ================= SET STATE ================= */
 
-        // Merge by date
+    setDailyConsumption(merged);
+    setDailyConsumptionByMeter(mergedMeters);
+    setLiveData(lastLiveData);
 
+    /* ================= SAVE CACHE ================= */
+    localStorage.setItem(
+      cacheKey,
+      JSON.stringify({
+        dailyConsumption: merged,
+        dailyConsumptionByMeter: mergedMeters,
+        liveData: lastLiveData,
+        time: Date.now(),
+      })
+    );
 
-        const mergedMeters = Object.keys(groupedByMeter).map((meterId) => ({
-          meterId,
-          consumption: groupedByMeter[meterId]
-        }));
-
-        setDailyConsumptionByMeter(mergedMeters);
-        const merged = Object.keys(grouped)
-          .sort((a, b) => new Date(a).getTime() - new Date(b).getTime()) // 🔥 SORT HERE
-          .map((date) => ({
-            reading_date: date,
-            consumption: grouped[date],
-          }));
-        setDailyConsumption(merged);
-        setLiveData(lastLiveData);
-
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoadingWater(false);
-      }
-    };
+  } catch (e) {
+    console.error(e);
+  } finally {
+    setLoadingWater(false);
+  }
+};
 
     fetchAllData();
 
