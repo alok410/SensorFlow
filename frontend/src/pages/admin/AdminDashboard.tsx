@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Users, UserCheck, Droplets, Activity } from 'lucide-react';
 import {
   ResponsiveContainer, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar
+  XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar,LabelList
 } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -623,18 +623,39 @@ const topUsers = getTopUsersData(topLimit);
 
   <CardContent>
     <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={topUsers}>
-        <CartesianGrid strokeDasharray="3 3" />
+    <BarChart data={topUsers}>
+  <CartesianGrid strokeDasharray="3 3" />
+
   <XAxis
-  dataKey="label"
-  tick={<CustomXAxisTick />}
-  interval={0}
-  height={70}
-/>
-        <YAxis />
-        <Tooltip />
-        <Bar dataKey="consumption" fill="#2563eb" />
-      </BarChart>
+    dataKey="label"
+    tick={<CustomXAxisTick />}
+    interval={0}
+    height={70}
+  />
+
+  <YAxis />
+
+  <Tooltip
+    formatter={(value: number) => `${value.toLocaleString()} L`}
+  />
+
+  <Bar dataKey="consumption" fill="#2563eb">
+    <LabelList
+      dataKey="consumption"
+      position="inside"
+      formatter={(value: number) =>
+        value > 1000
+          ? `${(value / 1000).toFixed(1)}K`
+          : value
+      }
+      style={{
+        fill: "#ffffff",
+        fontWeight: "bold",
+        fontSize: 12,
+      }}
+    />
+  </Bar>
+</BarChart>
     </ResponsiveContainer>
   </CardContent>
 </Card>
