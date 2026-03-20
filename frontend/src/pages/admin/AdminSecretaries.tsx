@@ -85,28 +85,24 @@ const loadSecretaries = async () => {
   try {
     const cached = localStorage.getItem("secretaries");
 
+    // ✅ Show cache instantly
     if (cached) {
-      const data = JSON.parse(cached);
-      console.log("📦 Secretaries from cache:", data);
-      setSecretaries(data);
-      return;
+      setSecretaries(JSON.parse(cached));
     }
 
+    // ✅ Always fetch fresh data
     const res = await getAllSecretaries();
     const data = extractArray(res);
 
-    console.log("🌐 Secretaries from API:", data);
-
     setSecretaries(data);
-
-    // ✅ store only if valid
-    if (data.length > 0) {
-      localStorage.setItem("secretaries", JSON.stringify(data));
-    }
+    localStorage.setItem("secretaries", JSON.stringify(data));
 
   } catch (err) {
     console.error("❌ Secretaries error:", err);
-    setSecretaries([]);
+
+    if (!localStorage.getItem("secretaries")) {
+      setSecretaries([]);
+    }
   }
 };
 const loadLocations = async () => {
@@ -191,58 +187,82 @@ const loadLocations = async () => {
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    try {
-      if (editingSecretary) {
-        await updateSecretary(editingSecretary._id, formData);
-        toast({
-          title: "Secretary Updated",
-          description: "Secretary updated successfully",
-        });
-      } else {
-        await createSecretary(formData);
-        toast({
-          title: "Secretary Created",
-          description: "Secretary added successfully",
-        });
-      }
+  try {
+    if (editingSecretary) {
+      const updated = await updateSecretary(editingSecretary._id, formData);
+      const updatedSecretary = updated.data || updated;
 
-      await loadSecretaries();
-      setIsDialogOpen(false);
-      resetForm();
-    } catch {
+      const updatedList = secretaries.map(s =>
+        s._id === editingSecretary._id ? updatedSecretary : s
+      );
+
+      setSecretaries(updatedList);
+      localStorage.setItem("secretaries", JSON.stringify(updatedList));
+
       toast({
-        title: "Error",
-        description: "Operation failed",
-        variant: "destructive",
+        title: "Secretary Updated",
+        description: "Secretary updated successfully",
+      });
+
+    } else {
+      const res = await createSecretary(formData);
+      const newSecretary = res.data || res;
+
+      const updatedList = [...secretaries, newSecretary];
+
+      setSecretaries(updatedList);
+      localStorage.setItem("secretaries", JSON.stringify(updatedList));
+
+      toast({
+        title: "Secretary Created",
+        description: "Secretary added successfully",
       });
     }
-  };
 
-  const confirmDelete = async () => {
-    if (!secretaryToDelete) return;
+    setIsDialogOpen(false);
+    resetForm();
 
-    try {
-      await deleteSecretary(secretaryToDelete._id);
+  } catch {
+    toast({
+      title: "Error",
+      description: "Operation failed",
+      variant: "destructive",
+    });
+  }
+};
 
-      toast({
-        title: "Secretary Deleted",
-        description: "Secretary removed successfully",
-      });
+ const confirmDelete = async () => {
+  if (!secretaryToDelete) return;
 
-      await loadSecretaries();
-      setIsDeleteDialogOpen(false);
-      setSecretaryToDelete(null);
-    } catch {
-      toast({
-        title: "Error",
-        description: "Delete failed",
-        variant: "destructive",
-      });
-    }
-  };
+  try {
+    await deleteSecretary(secretaryToDelete._id);
+
+    const updatedList = secretaries.filter(
+      s => s._id !== secretaryToDelete._id
+    );
+
+    setSecretaries(updatedList);
+    localStorage.setItem("secretaries", JSON.stringify(updatedList));
+
+    toast({
+      title: "Secretary Deleted",
+      description: "Secretary removed successfully",
+    });
+
+    setIsDeleteDialogOpen(false);
+    setSecretaryToDelete(null);
+
+  } catch {
+    toast({
+      title: "Error",
+      description: "Delete failed",
+      variant: "destructive",
+    });
+  }
+};
 
   return (
     <DashboardLayout navItems={adminNavItems} title="Secretary Management">
