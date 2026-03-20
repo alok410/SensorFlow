@@ -84,45 +84,43 @@ const [deleting, setDeleting] = useState(false);
     if (Array.isArray(res?.data?.data)) return res.data.data;
     return [];
   };
-
- const loadData = async () => {
+const loadData = async () => {
   try {
-    setLoading(true);
-
-    // ✅ TRY CACHE FIRST
     const cachedConsumers = localStorage.getItem("consumers");
     const cachedLocations = localStorage.getItem("locations");
 
-    let consumersData = [];
-    let locationsData = [];
+    // ✅ Only show loader if NO cache
+    if (!cachedConsumers || !cachedLocations) {
+      setLoading(true);
+    }
 
     if (cachedConsumers) {
-      consumersData = JSON.parse(cachedConsumers);
-      console.log("📦 Consumers from cache:", consumersData);
-    } else {
-      const res = await getConsumers();
-      consumersData = extractArray(res);
-      localStorage.setItem("consumers", JSON.stringify(consumersData));
-      console.log("🌐 Consumers from API:", consumersData);
+      setConsumers(JSON.parse(cachedConsumers));
     }
-
     if (cachedLocations) {
-      locationsData = JSON.parse(cachedLocations);
-      console.log("📦 Locations from cache:", locationsData);
-    } else {
-      const res = await getLocations();
-      locationsData = extractArray(res);
-      localStorage.setItem("locations", JSON.stringify(locationsData));
-      console.log("🌐 Locations from API:", locationsData);
+      setLocations(JSON.parse(cachedLocations));
     }
 
-    setConsumers(consumersData);
-    setLocations(locationsData);
+    const [consumersRes, locationsRes] = await Promise.all([
+      getConsumers(),
+      getLocations(),
+    ]);
+
+    const freshConsumers = extractArray(consumersRes);
+    const freshLocations = extractArray(locationsRes);
+
+    setConsumers(freshConsumers);
+    setLocations(freshLocations);
+
+    localStorage.setItem("consumers", JSON.stringify(freshConsumers));
+    localStorage.setItem("locations", JSON.stringify(freshLocations));
 
   } catch (err) {
     console.error("❌ Load error:", err);
-    setConsumers([]);
-    setLocations([]);
+
+    if (!localStorage.getItem("consumers")) setConsumers([]);
+    if (!localStorage.getItem("locations")) setLocations([]);
+
   } finally {
     setLoading(false);
   }
@@ -206,23 +204,42 @@ const resetForm = () => {
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
   try {
     setSubmitting(true);
 
     if (editingConsumer) {
-      await updateConsumer(editingConsumer._id, formData);
+  const updatedConsumer = await updateConsumer(editingConsumer._id, formData);
+
+const updatedList = consumers.map(c =>
+  c._id === editingConsumer._id ? (updatedConsumer.data || updatedConsumer) : c
+);
+
+setConsumers(updatedList);
+localStorage.setItem("consumers", JSON.stringify(updatedList));
+      setConsumers(updatedList);
+      localStorage.setItem("consumers", JSON.stringify(updatedList));
+
       toast({ title: "Consumer Updated" });
+
     } else {
-      await createConsumer(formData);
+      const res = await createConsumer(formData);
+const newConsumer = res.data || res;
+
+      const updatedList = [...consumers, newConsumer];
+
+      setConsumers(updatedList);
+      localStorage.setItem("consumers", JSON.stringify(updatedList));
+
       toast({ title: "Consumer Created" });
     }
 
-    await loadData();
+    // ✅ MUST be inside try
     setIsDialogOpen(false);
     resetForm();
+
   } catch {
     toast({
       title: "Operation Failed",
@@ -242,7 +259,7 @@ const handleSort = (column: string) => {
 };
   /* ================= DELETE ================= */
 
- const handleDelete = async () => {
+const handleDelete = async () => {
   if (!consumerToDelete) return;
 
   try {
@@ -250,11 +267,18 @@ const handleSort = (column: string) => {
 
     await deleteConsumer(consumerToDelete._id);
 
+    const updatedList = consumers.filter(
+      c => c._id !== consumerToDelete._id
+    );
+
+    setConsumers(updatedList);
+    localStorage.setItem("consumers", JSON.stringify(updatedList));
+
     toast({ title: "Consumer Deleted" });
 
-    await loadData();
     setIsDeleteDialogOpen(false);
     setConsumerToDelete(null);
+
   } catch {
     toast({
       title: "Delete Failed",
