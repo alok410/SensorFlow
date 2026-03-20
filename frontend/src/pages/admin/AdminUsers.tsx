@@ -534,6 +534,7 @@ const handleDelete = async () => {
   onChange={(e) =>
     setFormData({ ...formData, blockId: e.target.value })
   }
+  required
 />
 
               <Select
