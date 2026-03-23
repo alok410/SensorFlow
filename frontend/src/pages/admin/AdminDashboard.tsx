@@ -44,6 +44,15 @@ const AdminDashboard: React.FC = () => {
   const [endDate, setEndDate] = useState("");
   const [loadingWater, setLoadingWater] = useState(false);
   const [topLimit, setTopLimit] = useState(10);
+  const MAIN_METER_ID = "USFL_FL7053";
+
+const [mainMeterLive, setMainMeterLive] = useState<any>(null);
+const [mainMeterDaily, setMainMeterDaily] = useState<any[]>([]);
+
+// ✅ Separate filter
+const [mainDateFilter, setMainDateFilter] = useState<"7" | "15" | "30" | "custom">("7");
+const [mainStartDate, setMainStartDate] = useState("");
+const [mainEndDate, setMainEndDate] = useState("");
 
   /* ================= LOAD BASE DATA ================= */
 
@@ -130,6 +139,104 @@ const loadLocations = async () => {
     setLocations([]);
   }
 };
+/* main meter work */
+const getMainDateRange = () => {
+  const today = new Date();
+  let start = new Date();
+
+  if (mainDateFilter === "7") start.setDate(today.getDate() - 7);
+  if (mainDateFilter === "15") start.setDate(today.getDate() - 15);
+  if (mainDateFilter === "30") start.setDate(today.getDate() - 30);
+
+  if (mainDateFilter === "custom" && mainStartDate && mainEndDate) {
+    return { start: mainStartDate, end: mainEndDate };
+  }
+
+  return {
+    start: start.toISOString().split("T")[0],
+    end: today.toISOString().split("T")[0],
+  };
+};
+
+useEffect(() => {
+  const fetchMainMeter = async () => {
+
+    const { start, end } = getMainDateRange(); // ✅ IMPORTANT
+
+    const cacheKey = `mainMeter_${MAIN_METER_ID}_${start}_${end}`;
+
+    try {
+      /* ===== CACHE CHECK ===== */
+      const cached = localStorage.getItem(cacheKey);
+
+      if (cached) {
+        const parsed = JSON.parse(cached);
+
+        console.log("⚡ Main Meter from cache");
+
+        setMainMeterDaily(parsed.daily);
+        setMainMeterLive(parsed.live);
+        return;
+      }
+
+      console.log("🌐 Fetching Main Meter");
+
+      /* ===== API CALL ===== */
+      const [live, daily] = await Promise.all([
+        getLiveMeterData(MAIN_METER_ID),
+        getDailyConsumption(MAIN_METER_ID, start, end),
+      ]);
+
+      const liveData = live?.data || live || null;
+      const dailyData = daily?.data || [];
+
+      setMainMeterLive(liveData);
+      setMainMeterDaily(dailyData);
+
+      /* ===== SAVE CACHE ===== */
+      localStorage.setItem(
+        cacheKey,
+        JSON.stringify({
+          live: liveData,
+          daily: dailyData,
+          time: Date.now(),
+        })
+      );
+
+    } catch (e) {
+      console.error("Main meter error", e);
+    }
+  };
+
+  fetchMainMeter();
+
+}, [mainDateFilter, mainStartDate, mainEndDate]);
+useEffect(() => {
+  const interval = setInterval(async () => {
+    try {
+      const live = await getLiveMeterData(MAIN_METER_ID);
+
+      const liveData = live?.data || live || null;
+
+      setMainMeterLive(liveData);
+
+      console.log("🔄 Live updated");
+    } catch (e) {
+      console.error("Live refresh error", e);
+    }
+  }, 10000); // every 10 sec
+
+  return () => clearInterval(interval);
+}, []);
+
+
+
+
+
+
+
+
+
   /* ================= DATE RANGE ================= */
 
   const getDateRange = () => {
@@ -327,7 +434,14 @@ const cacheKey = `waterData_${selectedLocation}_${selectedUser}_${start}_${end}`
   );
 
   const leakageDetected = Number(liveData?.flow_rate || 0) > 0.02;
+const todayDate = new Date().toISOString().split("T")[0];
 
+const todayConsumption =
+  mainMeterDaily.find(d => d.reading_date === todayDate)?.consumption || 0;
+
+const todayReading = Number(mainMeterLive?.meter_reading || 0);
+
+const lastActive = mainMeterLive?.last_active;
   const consumptionChartData = dailyConsumption.map(d => ({
     date: d.reading_date,
     consumption: Number(d.consumption),
@@ -534,8 +648,124 @@ const topUsers = getTopUsersData(topLimit);
         <div className="hover:scale-[1.02] transition">
           <StatsCard title="Total Consumption" value={`${Number(totalWaterConsumption).toLocaleString("en-IN")} L`} icon={Droplets} />
         </div>
-      </div>
 
+
+  <div className="hover:scale-[1.02] transition">
+     <StatsCard
+    title="Main Meter Reading"
+    value={`${todayReading.toLocaleString()} L`}
+    icon={Droplets}
+  />
+        </div>
+        <div className="hover:scale-[1.02] transition">
+            <StatsCard
+    title="Today's Consumption"
+    value={`${Number(todayConsumption).toLocaleString()} L`}
+    icon={Droplets}
+  />
+        </div>
+        <div className="hover:scale-[1.02] transition">
+            <StatsCard
+    title="Last Active"
+    value={
+      lastActive
+        ? new Date(lastActive).toLocaleString("en-IN")
+        : "-"
+    }
+    icon={Activity}
+  />
+
+        </div>
+        <div className="hover:scale-[1.02] transition">
+          <StatsCard
+    title="Flow Rate"
+    value={`${mainMeterLive?.flow_rate || 0} L/s`}
+    icon={Activity}
+  />
+        </div>
+
+
+
+      </div>
+<Card className="mb-4 border bg-green-50">
+  <CardContent className="p-4">
+
+    <label className="text-sm font-medium mb-2">
+      Main Meter Date Range
+    </label>
+
+    <div className="flex gap-2 flex-wrap">
+
+      {["7", "15", "30"].map((d) => (
+        <button
+          key={d}
+          onClick={() => setMainDateFilter(d as any)}
+          className={`px-3 py-1 rounded-full ${
+            mainDateFilter === d
+              ? "bg-green-600 text-white"
+              : "bg-white border"
+          }`}
+        >
+          Last {d} Days
+        </button>
+      ))}
+
+      <button
+        onClick={() => setMainDateFilter("custom")}
+        className={`px-3 py-1 rounded-full ${
+          mainDateFilter === "custom"
+            ? "bg-green-600 text-white"
+            : "bg-white border"
+        }`}
+      >
+        Custom
+      </button>
+
+      {mainDateFilter === "custom" && (
+        <>
+          <input
+            type="date"
+            value={mainStartDate}
+            onChange={(e) => setMainStartDate(e.target.value)}
+            className="border px-2 py-1 rounded"
+          />
+          <input
+            type="date"
+            value={mainEndDate}
+            onChange={(e) => setMainEndDate(e.target.value)}
+            className="border px-2 py-1 rounded"
+          />
+        </>
+      )}
+
+    </div>
+  </CardContent>
+</Card>
+<Card className="mb-6">
+  <CardHeader>
+    <CardTitle>Main Meter Consumption</CardTitle>
+  </CardHeader>
+
+  <CardContent>
+    <ResponsiveContainer width="100%" height={300}>
+      <LineChart data={mainMeterDaily}>
+        <CartesianGrid strokeDasharray="3 3" />
+
+        <XAxis dataKey="reading_date" />
+        <YAxis />
+
+        <Tooltip formatter={(v: number) => `${v} L`} />
+
+        <Line
+          type="monotone"
+          dataKey="consumption"
+          stroke="#16a34a"
+          strokeWidth={3}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  </CardContent>
+</Card>
       {/* CHART SECTION */}
       <Card className="shadow-sm border-0">
         <CardHeader>
