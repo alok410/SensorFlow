@@ -63,6 +63,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route path="/admin/user/main-meter" element={<AdminUserAnalysis />} />
 
 
             {/* Secretary Routes */}

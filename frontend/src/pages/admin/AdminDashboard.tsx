@@ -46,7 +46,40 @@ const AdminDashboard: React.FC = () => {
   const [loadingWater, setLoadingWater] = useState(false);
   const [topLimit, setTopLimit] = useState(10);
   const navigate = useNavigate();   
+const isValidConsumer = (c: any) => {
+  if (!c) return false;
 
+  const blockInvalid =
+    !c.blockId || c.blockId.toString().trim() === "00";
+
+  const locationInvalid =
+    c.locationCode === 1 || c.locationCode === "1";
+
+  const meterInvalid =
+    !c.meterId || c.meterId === "MAIN" || c.meterId === "0";
+
+  const valid = !(blockInvalid || locationInvalid || meterInvalid);
+
+  
+
+  return valid;
+};
+
+
+
+const mainMeter = consumers.find(
+  (c) =>
+    c?.blockId?.toString() === "00" ||
+    c?.locationCode === 1 ||
+    c?.meterId === "MAIN"
+);
+
+
+const [mainMeterData, setMainMeterData] = useState({
+  total: 0,
+  today: 0,
+  month: 0,
+});
   /* ================= LOAD BASE DATA ================= */
 
   useEffect(() => {
@@ -181,20 +214,20 @@ const cacheKey = `waterData_${selectedLocation}_${selectedUser}_${start}_${end}`
       setLiveData(parsed.liveData);
 
       setLoadingWater(false);
+      
       return; // 🚀 STOP API CALL
     }
 
-    console.log("🌐 Fetching from API");
 
     /* ================= FILTER USERS ================= */
-    let filtered =
-      selectedLocation === "all"
-        ? consumers
-        : consumers.filter(
-            (c) =>
-              c.locationId?.toString() ===
-              selectedLocation?.toString()
-          );
+   let filtered =
+  selectedLocation === "all"
+    ? consumers.filter(isValidConsumer)
+    : consumers.filter(
+        (c) =>
+          isValidConsumer(c) &&
+          c.locationId?.toString() === selectedLocation?.toString()
+      );
 
     if (selectedUser !== "all") {
       filtered = filtered.filter(
@@ -292,6 +325,57 @@ const cacheKey = `waterData_${selectedLocation}_${selectedUser}_${start}_${end}`
     consumers
   ]);
   useEffect(() => {
+  if (!mainMeter?.meterId) return;
+
+  const fetchMainMeter = async () => {
+    try {
+      const today = new Date().toISOString().split("T")[0];
+
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+
+      const monthStart = startOfMonth.toISOString().split("T")[0];
+
+      // API calls
+      const daily = await getDailyConsumption(
+        mainMeter.meterId,
+        monthStart,
+        today
+      );
+
+      const dailyArray =
+        Array.isArray(daily)
+          ? daily
+          : Array.isArray(daily?.data)
+          ? daily.data
+          : [];
+
+      let total = 0;
+      let todayUsage = 0;
+
+      dailyArray.forEach((d: any) => {
+        const val = Number(d.consumption || 0);
+        total += val;
+
+        if (d.reading_date === today) {
+          todayUsage = val;
+        }
+      });
+
+      setMainMeterData({
+        total,
+        today: todayUsage,
+        month: total,
+      });
+
+    } catch (err) {
+      console.error("Main meter fetch error:", err);
+    }
+  };
+
+  fetchMainMeter();
+}, [mainMeter]);
+  useEffect(() => {
     setSelectedUser("all");
   }, [selectedLocation]);
   const [sortColumn, setSortColumn] = useState<string>("name");
@@ -306,18 +390,22 @@ const cacheKey = `waterData_${selectedLocation}_${selectedUser}_${start}_${end}`
     }
   };
   /* ================= DERIVED DATA ================= */
-  const usersForDropdown =
-    selectedLocation === "all"
-      ? consumers
-      : consumers.filter(
+const usersForDropdown =
+  selectedLocation === "all"
+    ? consumers.filter(isValidConsumer)
+    : consumers.filter(
         (c) =>
-          c.locationId?.toString() ===
-          selectedLocation?.toString()
+          isValidConsumer(c) &&
+          c.locationId?.toString() === selectedLocation?.toString()
       );
-  const filteredConsumers =
-    selectedLocation === "all"
-      ? consumers
-      : consumers.filter(c => c.locationId === selectedLocation);
+const filteredConsumers =
+  selectedLocation === "all"
+    ? consumers.filter(isValidConsumer)
+    : consumers.filter(
+        (c) =>
+          isValidConsumer(c) &&
+          c.locationId === selectedLocation
+      );
 
   const filteredSecretaries =
     selectedLocation === "all"
@@ -385,15 +473,23 @@ const getTopUsersData = (limit: number) => {
   return dailyConsumptionByMeter
     .map((m) => {
       const user = consumers.find(
-        (c) => c.meterId?.toString() === m.meterId?.toString()
+        (c) =>
+          c.meterId?.toString() === m.meterId?.toString()
       );
 
+      // ❌ REMOVE invalid users completely
+      if (!isValidConsumer(user)) {
+        console.log("🚫 Skipping invalid user in chart:", user);
+        return null;
+      }
+
       return {
-        label: `${user?.blockId || "-"}|${user?.name || "Unknown"}`, // 🔥 IMPORTANT
+        label: `${user.blockId}|${user.name}`,
         consumption: Number(m.consumption || 0),
       };
     })
-    .sort((a, b) => b.consumption - a.consumption)
+    .filter(Boolean) // 🔥 REMOVE NULLS
+    .sort((a, b) => b!.consumption - a!.consumption)
     .slice(0, limit);
 };
 
@@ -441,12 +537,13 @@ const topUsers = getTopUsersData(topLimit);
               className="w-full border rounded-md px-3 py-2 bg-white shadow-sm focus:ring-2 focus:ring-blue-400"
             >
               <option value="all">All Locations</option>
-              {Array.isArray(locations) &&
-                locations.map((l) => (
-                  <option key={l._id} value={l._id}>
-                    {l.name}
-                  </option>
-                ))}
+              {locations
+  .filter((l) => l.locationCode !== 1)
+  .map((l) => (
+    <option key={l._id} value={l._id}>
+      {l.name}
+    </option>
+))}
             </select>
           </div>
 
@@ -521,7 +618,49 @@ const topUsers = getTopUsersData(topLimit);
         </CardContent>
       </Card>
 
+<Card
+  className="mb-6 cursor-pointer hover:shadow-lg transition border-2 border-blue-500"
+onClick={() => {
+  if (mainMeter?._id) {
+    navigate(`/admin/user/${mainMeter._id}`);
+  }
+}}
+>
+  <CardHeader>
+    <CardTitle className="flex items-center gap-2">
+      <Activity className="text-blue-600" />
+      Main Meter Overview
+    </CardTitle>
+    <CardDescription>
+      Click to view detailed analytics
+    </CardDescription>
+  </CardHeader>
 
+  <CardContent className="grid md:grid-cols-3 gap-4">
+
+    <div className="bg-blue-50 p-4 rounded-lg">
+      <p className="text-sm text-muted-foreground">Today's Usage</p>
+      <p className="text-xl font-bold text-blue-700">
+        {formatLiters(mainMeterData.today)}
+      </p>
+    </div>
+
+    <div className="bg-green-50 p-4 rounded-lg">
+      <p className="text-sm text-muted-foreground">This Month</p>
+      <p className="text-xl font-bold text-green-700">
+        {formatLiters(mainMeterData.month)}
+      </p>
+    </div>
+
+    <div className="bg-purple-50 p-4 rounded-lg">
+      <p className="text-sm text-muted-foreground">Total Usage</p>
+      <p className="text-xl font-bold text-purple-700">
+        {formatLiters(mainMeterData.total)}
+      </p>
+    </div>
+
+  </CardContent>
+</Card>
       {/* STATS SECTION */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
         <div className="hover:scale-[1.02] transition">
