@@ -512,7 +512,53 @@ const topUsers = getTopUsersData(topLimit);
   return (
     <DashboardLayout navItems={adminNavItems} title="Admin Dashboard">
 
-      {/* HEADER SECTION */}
+ 
+
+<Card
+  className="mb-6 cursor-pointer hover:shadow-lg transition border-2 border-blue-500"
+onClick={() => {
+  if (mainMeter?._id) {
+    navigate(`/admin/user/${mainMeter._id}`);
+  }
+}}
+>
+  <CardHeader>
+    <CardTitle className="flex items-center gap-2">
+      <Activity className="text-blue-600" />
+      Main Meter Overview
+    </CardTitle>
+    <CardDescription>
+      Click to view detailed analytics
+    </CardDescription>
+  </CardHeader>
+
+  <CardContent className="grid md:grid-cols-3 gap-4">
+
+    <div className="bg-blue-50 p-4 rounded-lg">
+      <p className="text-sm text-muted-foreground">Today's Usage</p>
+      <p className="text-xl font-bold text-blue-700">
+        {formatLiters(mainMeterData.today)}
+      </p>
+    </div>
+
+    <div className="bg-green-50 p-4 rounded-lg">
+      <p className="text-sm text-muted-foreground">This Month</p>
+      <p className="text-xl font-bold text-green-700">
+        {formatLiters(mainMeterData.month)}
+      </p>
+    </div>
+
+    <div className="bg-purple-50 p-4 rounded-lg">
+      <p className="text-sm text-muted-foreground">Total Usage</p>
+      <p className="text-xl font-bold text-purple-700">
+        {formatLiters(mainMeterData.total)}
+      </p>
+    </div>
+
+  </CardContent>
+</Card>
+
+     {/* HEADER SECTION */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">
           Water Analytics Overview
@@ -617,50 +663,6 @@ const topUsers = getTopUsersData(topLimit);
 
         </CardContent>
       </Card>
-
-<Card
-  className="mb-6 cursor-pointer hover:shadow-lg transition border-2 border-blue-500"
-onClick={() => {
-  if (mainMeter?._id) {
-    navigate(`/admin/user/${mainMeter._id}`);
-  }
-}}
->
-  <CardHeader>
-    <CardTitle className="flex items-center gap-2">
-      <Activity className="text-blue-600" />
-      Main Meter Overview
-    </CardTitle>
-    <CardDescription>
-      Click to view detailed analytics
-    </CardDescription>
-  </CardHeader>
-
-  <CardContent className="grid md:grid-cols-3 gap-4">
-
-    <div className="bg-blue-50 p-4 rounded-lg">
-      <p className="text-sm text-muted-foreground">Today's Usage</p>
-      <p className="text-xl font-bold text-blue-700">
-        {formatLiters(mainMeterData.today)}
-      </p>
-    </div>
-
-    <div className="bg-green-50 p-4 rounded-lg">
-      <p className="text-sm text-muted-foreground">This Month</p>
-      <p className="text-xl font-bold text-green-700">
-        {formatLiters(mainMeterData.month)}
-      </p>
-    </div>
-
-    <div className="bg-purple-50 p-4 rounded-lg">
-      <p className="text-sm text-muted-foreground">Total Usage</p>
-      <p className="text-xl font-bold text-purple-700">
-        {formatLiters(mainMeterData.total)}
-      </p>
-    </div>
-
-  </CardContent>
-</Card>
       {/* STATS SECTION */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
         <div className="hover:scale-[1.02] transition">
