@@ -220,7 +220,7 @@ const AdminUserAnalysis: React.FC = () => {
 
         {/* STATS */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-          <StatsCard title="Total" value={`${totalConsumption} L`} icon={BarChart3} variant="primary" />
+    
           <StatsCard title="Today" value={`${todayConsumption} L`} variant="success" />
           <StatsCard title="Average" value={`${avgConsumption} L`} />
           <StatsCard title="This Month" value={`${thisMonthTotal} L`} variant="warning" />
@@ -247,6 +247,7 @@ const AdminUserAnalysis: React.FC = () => {
             </button>
           ))}
         </div>
+              <StatsCard title="Total" value={`${totalConsumption} L`} icon={BarChart3} variant="primary" />
 
         {/* GRAPH */}
         <Card>
