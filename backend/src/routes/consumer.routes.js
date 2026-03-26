@@ -4,6 +4,7 @@ import {
   getAllConsumers,
   updateConsumer,
   deleteConsumer,
+  getConsumerById,
 } from "../controllers/consumer.controller.js";
 
 import { protect } from "../middleware/auth.middleware.js";
@@ -26,5 +27,7 @@ router.put("/:id", protect, authorize("admin"), updateConsumer);
 
 // Delete Consumer
 router.delete("/:id", protect, authorize("admin"), deleteConsumer);
+
+router.get("/:id", protect, authorize("admin", "secretary"), getConsumerById);  
 
 export default router;

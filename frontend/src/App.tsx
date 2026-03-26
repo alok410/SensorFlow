@@ -18,20 +18,21 @@ import ConsumerDashboard from "./pages/consumer/ConsumerDashboard";
 import NotFound from "./pages/NotFound";
 import AdminLocations from "./pages/admin/AdminLocation";
 import SecretaryUsers from "./pages/secretary/SecretaryUsers";
+import AdminUserAnalysis from "./pages/admin/AdminUserAnalysis";
 
 const queryClient = new QueryClient();
 
 const HomeRedirect = () => {
   const { user, isLoading } = useAuth();
-  
+
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center bg-background">Loading...</div>;
   }
-  
+
   if (user) {
     return <Navigate to={getDashboardPath(user.role)} replace />;
   }
-  
+
   return <Navigate to="/login" replace />;
 };
 
@@ -46,23 +47,31 @@ const App = () => (
             <Route path="/" element={<HomeRedirect />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            
-          
+
+
             <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['admin']}><AdminUsers /></ProtectedRoute>} />
             <Route path="/admin/secretaries" element={<ProtectedRoute allowedRoles={['admin']}><AdminSecretaries /></ProtectedRoute>} />
             <Route path="/admin/rates" element={<ProtectedRoute allowedRoles={['admin']}><AdminRates /></ProtectedRoute>} />
             <Route path="/admin/invoices" element={<ProtectedRoute allowedRoles={['admin']}><AdminInvoices /></ProtectedRoute>} />
             <Route path="/admin/locations" element={<ProtectedRoute allowedRoles={['admin']}><AdminLocations /></ProtectedRoute>} />
+            <Route
+              path="/admin/user/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminUserAnalysis />
+                </ProtectedRoute>
+              }
+            />
 
-            
+
             {/* Secretary Routes */}
             <Route path="/secretary" element={<ProtectedRoute allowedRoles={['secretary']}><SecretaryDashboard /></ProtectedRoute>} />
-            <Route path="/secretary/Users" element={<ProtectedRoute allowedRoles={['secretary']}><SecretaryUsers/></ProtectedRoute>} />
-            
+            <Route path="/secretary/Users" element={<ProtectedRoute allowedRoles={['secretary']}><SecretaryUsers /></ProtectedRoute>} />
+
             {/* Consumer Routes */}
             <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['consumer']}><ConsumerDashboard /></ProtectedRoute>} />
-            
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

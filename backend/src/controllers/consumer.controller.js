@@ -174,3 +174,31 @@ export const deleteConsumer = async (req, res) => {
     });
   }
 };
+
+export const getConsumerById = async (req, res) => {
+  try {
+    const consumer = await User.findOne({
+      _id: req.params.id,
+      role: "consumer",
+      isActive: true,
+    }).select("-password");
+
+    if (!consumer) {
+      return res.status(404).json({
+        success: false,
+        message: "Consumer not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: consumer,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
