@@ -4,7 +4,7 @@ import MeterReading from "../models/MeterReading.js";
 
 export const storeMeterData = async (req, res) => {
   try {
-    const response = await axios.get("YOUR_API_URL");
+    const response = await axios.get("https://apps.samasth.io:8090/api/Senseflow/Flowmeter/latest?device=USFL_FL7053");
     const apiData = response.data;
 
     const formattedData = {
