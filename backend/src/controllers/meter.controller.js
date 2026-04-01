@@ -4,7 +4,7 @@ import MeterReading from "../models/MeterReading.js";
 
 export const storeMeterData = async (req, res) => {
   try {
-    const token = TtiW3L8vWbrhNXIACx5dYDCHUdFHnNrGQzjbROMFai42C1Tx7hD7bra8RjWWytFa;
+    const token = "TtiW3L8vWbrhNXIACx5dYDCHUdFHnNrGQzjbROMFai42C1Tx7hD7bra8RjWWytFa";
 
     // 🔗 Call external API
     const response = await axios.get(
