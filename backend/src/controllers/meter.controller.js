@@ -4,16 +4,30 @@ import MeterReading from "../models/MeterReading.js";
 
 export const storeMeterData = async (req, res) => {
   try {
-    const response = await axios.get("https://apps.samasth.io:8090/api/Senseflow/Flowmeter/latest?device=USFL_FL7053");
+    const token = "TtiW3L8vWbrhNXIACx5dYDCHUdFHnNrGQzjbROMFai42C1Tx7hD7bra8RjWWytFa";
+
+    const response = await axios.get(
+      "https://apps.samasth.io:8090/api/Senseflow/Flowmeter/latest?device=USFL_FL7053",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
     const apiData = response.data;
 
     const formattedData = {
-      flowRate: parseFloat(apiData.flow_rate),
-      serialNumber: apiData.serial_number,
-      meterReading: parseFloat(apiData.meter_reading),
-      readingDatetime: new Date(apiData.reading_datetime),
-      lastActive: new Date(apiData.last_active),
-      rssi: parseInt(apiData.rssi)
+      flowRate: parseFloat(apiData.flow_rate) || 0,
+      serialNumber: apiData.serial_number || "UNKNOWN",
+      meterReading: parseFloat(apiData.meter_reading) || 0,
+      readingDatetime: apiData.reading_datetime
+        ? new Date(apiData.reading_datetime)
+        : new Date(),
+      lastActive: apiData.last_active
+        ? new Date(apiData.last_active)
+        : new Date(),
+      rssi: parseInt(apiData.rssi) || 0
     };
 
     // Duplicate check
@@ -39,12 +53,12 @@ export const storeMeterData = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error:", error.message);
+    console.error("Error:", error.response?.data || error.message);
 
     return res.status(500).json({
       success: false,
       message: "Failed to store data",
-      error: error.message
+      error: error.response?.data || error.message
     });
   }
 };
