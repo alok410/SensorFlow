@@ -2,6 +2,8 @@
 import express from 'express';
 import cors from 'cors';
 
+import "./scripts/cron.service.js"; // ✅ ADD THIS LINE
+
 import authRoutes from './routes/auth.routes.js';
 import locationRoutes from './routes/location.routes.js'
 import secretaryRoutes from "./routes/secretary.routes.js";
@@ -19,7 +21,7 @@ app.use('/api/auth', authRoutes);
 app.use("/api/locations", locationRoutes);
 app.use("/api/secretaries", secretaryRoutes);
 app.use("/api/consumers", consumerRoutes);
-app.use("/api/meter",meterRoutes );
+app.use("/api/meter", meterRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
