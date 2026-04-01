@@ -324,7 +324,7 @@ const cacheKey = `waterData_${selectedLocation}_${selectedUser}_${start}_${end}`
     endDate,
     consumers
   ]);
-  useEffect(() => {
+useEffect(() => {
   if (!mainMeter?.meterId) return;
 
   const fetchMainMeter = async () => {
@@ -333,39 +333,28 @@ const cacheKey = `waterData_${selectedLocation}_${selectedUser}_${start}_${end}`
 
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
-
       const monthStart = startOfMonth.toISOString().split("T")[0];
 
-      // API calls
-      const daily = await getDailyConsumption(
-        mainMeter.meterId,
-        monthStart,
-        today
-      );
+      /* ================= 1. LIVE DATA ================= */
+      const liveRes = await getLiveMeterData(mainMeter.meterId);
+      const live = liveRes?.data || liveRes || {};
+      const latestReading = Number(live?.meter_reading || 0);
 
-      const dailyArray =
-        Array.isArray(daily)
-          ? daily
-          : Array.isArray(daily?.data)
-          ? daily.data
-          : [];
+      /* ================= 2. TODAY USAGE ================= */
+      const todayLogsRes = await getDailyConsumption(mainMeter.meterId, today, today);
+      const todayLogs = Array.isArray(todayLogsRes) ? todayLogsRes : Array.isArray(todayLogsRes?.data) ? todayLogsRes.data : [];
+      const todayUsage = todayLogs.reduce((sum, item) => sum + Number(item.consumption || 0), 0);
 
-      let total = 0;
-      let todayUsage = 0;
+      /* ================= 3. MONTH USAGE ================= */
+      const monthLogsRes = await getDailyConsumption(mainMeter.meterId, monthStart, today);
+      const monthLogs = Array.isArray(monthLogsRes) ? monthLogsRes : Array.isArray(monthLogsRes?.data) ? monthLogsRes.data : [];
+      const monthUsage = monthLogs.reduce((sum, item) => sum + Number(item.consumption || 0), 0);
 
-      dailyArray.forEach((d: any) => {
-        const val = Number(d.consumption || 0);
-        total += val;
-
-        if (d.reading_date === today) {
-          todayUsage = val;
-        }
-      });
-
+      /* ================= FINAL ================= */
       setMainMeterData({
-        total,
-        today: todayUsage,
-        month: total,
+        total: latestReading,   // ✅ live reading
+        today: todayUsage,      // ✅ sum of today's consumption
+        month: monthUsage,      // ✅ sum of month consumption
       });
 
     } catch (err) {
@@ -423,9 +412,8 @@ const filteredConsumers =
     consumption: Number(d.consumption),
   }));
   const formatLiters = (value: number) => {
-    if (value >= 1000000) return (value / 1000000).toFixed(2) + " ML";
-    if (value >= 1000) return (value / 1000).toFixed(2) + " L";
-    return value.toFixed(0) + " L";
+
+    return value +" L";
   };
   const getTodayUsage = (meterId: string) => {
 
@@ -551,7 +539,7 @@ onClick={() => {
     <div className="bg-purple-50 p-4 rounded-lg">
       <p className="text-sm text-muted-foreground">Total Usage</p>
       <p className="text-xl font-bold text-purple-700">
-        {formatLiters(mainMeterData.total)}
+        {formatLiters(mainMeterData.total*1000)}
       </p>
     </div>
 
