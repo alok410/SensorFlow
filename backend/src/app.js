@@ -2,7 +2,6 @@
 import express from 'express';
 import cors from 'cors';
 
-import "./scripts/cron.service.js"; // ✅ ADD THIS LINE
 
 import authRoutes from './routes/auth.routes.js';
 import locationRoutes from './routes/location.routes.js'
