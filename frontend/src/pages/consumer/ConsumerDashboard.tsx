@@ -29,7 +29,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { FREE_TIER_LITERS } from '@/types';
 import { getHistoricalReadings } from '../../services/water.service';
 
 const API_URL2 = import.meta.env.VITE_API_URL;
@@ -76,6 +75,10 @@ const ConsumerDashboard: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const token = localStorage.getItem('token');
+  const [waterConfig, setWaterConfig] = useState({
+  ratePerLiter: 0,
+  freeTierLiters: 0,
+});
 
   /* ================= STATE ================= */
   const [consumer, setConsumer] = useState<any>(null);
@@ -110,7 +113,19 @@ const ConsumerDashboard: React.FC = () => {
   const [endDate, setEndDate] = useState<Date | undefined>(new Date());
   const [appliedStartDate, setAppliedStartDate] = useState(startDate);
   const [appliedEndDate, setAppliedEndDate] = useState(endDate);
-
+useEffect(() => {
+  fetch(`${API_URL}/water-rate`)
+    .then(res => res.json())
+    .then(data => {
+      if (data) {
+        setWaterConfig({
+          ratePerLiter: data.ratePerLiter || 0,
+          freeTierLiters: data.freeTierLiters || 0,
+        });
+      }
+    })
+    .catch(err => console.error("Rate fetch error:", err));
+}, []);
   /* ================= FETCH CONSUMER ================= */
   useEffect(() => {
     if (!token) return;
@@ -382,34 +397,44 @@ const consumptionData = filteredReadings.map((r) => ({
 }));
 
   const monthlyAnalysis = useMemo(() => {
-    if (filteredReadings.length === 0) {
-      return {
-        totalConsumption: 0,
-        avgConsumption: 0,
-        chargeableConsumption: 0,
-        estimatedBill: 0,
-        minConsumption: 0,
-        maxConsumption: 0,
-        readingsCount: 0,
-      };
-    }
-
-    const consumptions = filteredReadings.map((r) => r.consumption);
-    
-    const total = consumptions.reduce((a, b) => a + b, 0);
-    const chargeable = Math.max(0, total - FREE_TIER_LITERS);
-
+  if (filteredReadings.length === 0) {
     return {
-      totalConsumption: total,
-      avgConsumption: Math.round(total / consumptions.length),
-      chargeableConsumption: chargeable,
-      estimatedBill: chargeable * 0.01,
-      minConsumption: Math.min(...consumptions),
-      maxConsumption: Math.max(...consumptions),
-      readingsCount: consumptions.length,
+      totalConsumption: 0,
+      avgConsumption: 0,
+      chargeableConsumption: 0,
+      estimatedBill: 0,
+      minConsumption: 0,
+      maxConsumption: 0,
+      readingsCount: 0,
     };
-  }, [filteredReadings]);
+  }
 
+  const consumptions = filteredReadings.map((r) => r.consumption);
+  const total = consumptions.reduce((a, b) => a + b, 0);
+
+  const freeLimit = waterConfig.freeTierLiters;
+  const rate = waterConfig.ratePerLiter;
+
+  const chargeable = Math.max(0, total - freeLimit);
+  const bill = chargeable * rate;
+
+  return {
+    totalConsumption: total,
+    avgConsumption: Math.round(total / consumptions.length),
+    chargeableConsumption: chargeable,
+    estimatedBill: bill,
+    minConsumption: Math.min(...consumptions),
+    maxConsumption: Math.max(...consumptions),
+    readingsCount: consumptions.length,
+  };
+}, [filteredReadings, waterConfig]);
+const thisMonthBill = useMemo(() => {
+  const free = waterConfig.freeTierLiters || 0;
+  const rate = waterConfig.ratePerLiter || 0;
+
+  const chargeable = Math.max(0, thisMonthTotal - free);
+  return chargeable * rate;
+}, [thisMonthTotal, waterConfig]);
   const pendingInvoices = invoices.filter((i) => i.status !== 'paid');
   const totalOutstanding = pendingInvoices.reduce(
     (s, i) => s + i.totalAmount,
@@ -473,12 +498,20 @@ const consumptionData = filteredReadings.map((r) => ({
         </div>
 
         <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
-          <StatsCard title="Prepaid Balance" value={`₹${currentPrepaidBalance.toFixed(2)}`} icon={Wallet} variant="success" />
-          <StatsCard title="Outstanding Amount" value={`₹${totalOutstanding.toFixed(2)}`} icon={IndianRupee} variant={totalOutstanding > 0 ? 'warning' : 'success'} />
-          <StatsCard title="Free Tier" value={`${FREE_TIER_LITERS.toLocaleString()} L`} icon={Gift} variant="primary" />
+          <StatsCard 
+  title="Free Tier" 
+  value={`${waterConfig.freeTierLiters.toLocaleString()} L`} 
+  icon={Gift} 
+  variant="primary" 
+/>
           {/* <StatsCard title="Last Reading" value={`${(lastReading?.reading || 0).toLocaleString()} M³`} icon={Droplets} variant="default" /> */}
           <StatsCard title="Last Consumption" value={`${((lastReading?.consumption) || 0).toLocaleString()} L`} icon={TrendingUp} variant="default" />
-          <StatsCard title="Pending Bills" value={pendingInvoices.length} icon={FileText} variant={pendingInvoices.length > 0 ? 'warning' : 'default'} />
+           <StatsCard
+  title="This Month Bill"
+  value={`₹${thisMonthBill.toFixed(2)}`}
+  icon={IndianRupee}
+  variant="success"
+/>
             <StatsCard
   title="This Month Consumption"
   value={`${thisMonthTotal.toLocaleString()} L`}
@@ -682,12 +715,11 @@ const consumptionData = filteredReadings.map((r) => ({
               <div className="p-4 rounded-lg bg-muted/50 border">
                 <p className="text-sm text-muted-foreground">Chargeable Usage</p>
                 <p className="text-2xl font-bold">{monthlyAnalysis.chargeableConsumption.toLocaleString()} L</p>
-                <p className="text-xs text-muted-foreground">(After {FREE_TIER_LITERS.toLocaleString()}L free)</p>
+<p className="text-xs text-muted-foreground">
+  (After {waterConfig.freeTierLiters.toLocaleString()}L free)
+</p>
               </div>
-              <div className="p-4 rounded-lg bg-success/10 border border-success/20">
-                <p className="text-sm text-muted-foreground">Estimated Bill</p>
-                <p className="text-2xl font-bold text-success">₹{monthlyAnalysis.estimatedBill.toFixed(2)}</p>
-              </div>
+              
             </div>
 
             {/* Readings Table */}
@@ -728,7 +760,16 @@ const consumptionData = filteredReadings.map((r) => ({
                             <TableCell className="font-medium">{reading.reading.toLocaleString()} M³</TableCell>
                             <TableCell className="text-muted-foreground">{reading.previousReading.toLocaleString()} M³</TableCell>
                             <TableCell>
-                      <Badge variant="outline" className={reading.consumption > FREE_TIER_LITERS ? 'border-warning text-warning' : 'border-success text-success'}>
+                  <Badge
+  variant="outline"
+  className={
+    reading.consumption > waterConfig.freeTierLiters
+      ? 'border-warning text-warning'
+      : 'border-success text-success'
+  }
+>
+
+
                                 {(reading.consumption).toLocaleString()} L
                               </Badge>
                             </TableCell>
