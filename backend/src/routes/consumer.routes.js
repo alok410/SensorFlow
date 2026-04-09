@@ -12,20 +12,13 @@ import { authorize } from "../middleware/role.middleware.js";
 
 const router = express.Router();
 
-/* =================================
-   ADMIN ONLY ROUTES
-=================================*/
 
-// Create Consumer
 router.post("/", protect, authorize("admin"), createConsumer);
 
-// Get All Consumers
 router.get("/", protect, authorize("admin" , "secretary"), getAllConsumers);
 
-// Update Consumer
 router.put("/:id", protect, authorize("admin"), updateConsumer);
 
-// Delete Consumer
 router.delete("/:id", protect, authorize("admin"), deleteConsumer);
 
 router.get("/:id", protect, authorize("admin", "secretary"), getConsumerById);  
