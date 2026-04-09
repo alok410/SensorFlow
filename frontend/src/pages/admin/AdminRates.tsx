@@ -4,10 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getWaterRates, setWaterRates, generateId } from '@/lib/storage';
-import { WaterRate, FREE_TIER_LITERS } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { Droplets, Save, Info } from 'lucide-react';
+import { Droplets, Save } from 'lucide-react';
 
 const adminNavItems = [
   { label: 'Overview', href: '/admin' },
@@ -16,137 +14,183 @@ const adminNavItems = [
   { label: 'Rates', href: '/admin/rates' },
   { label: 'Invoices', href: '/admin/invoices' },
   { label: "Locations", href: "/admin/locations" },
-
 ];
 
 const AdminRates: React.FC = () => {
   const { toast } = useToast();
-  const [rate, setRate] = useState<WaterRate | null>(null);
-  const [ratePerLiter, setRatePerLiter] = useState('0.002');
-  const [freeTierLiters, setFreeTierLiters] = useState(FREE_TIER_LITERS.toString());
 
+  const [isDirty, setIsDirty] = useState(false);
+  const [rate, setRate] = useState<any>(null);
+  const [ratePerLiter, setRatePerLiter] = useState('0.002');
+  const [freeTierLiters, setFreeTierLiters] = useState('0');
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const API_URL = import.meta.env.VITE_API_URL;
+
+  // ✅ Fetch data
   useEffect(() => {
-    const rates = getWaterRates();
-    if (rates.length > 0 && rates[0].ratePerLiter !== undefined) {
-      setRate(rates[0]);
-      setRatePerLiter(rates[0].ratePerLiter.toString());
-      setFreeTierLiters((rates[0].freeTierLiters || FREE_TIER_LITERS).toString());
-    }
+    fetch(`${API_URL}/water-rate`)
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          setRate(data);
+          setRatePerLiter(data.ratePerLiter?.toString() || '0.002');
+          setFreeTierLiters(data.freeTierLiters?.toString() || '0');
+        }
+      })
+      .catch(err => console.error(err))
+      .finally(() => setLoading(false));
   }, []);
 
-  const handleSave = () => {
+  // ✅ Save
+  const handleSave = async () => {
     const newRateValue = parseFloat(ratePerLiter);
     const newFreeTier = parseInt(freeTierLiters);
-    
+
     if (isNaN(newRateValue) || newRateValue < 0) {
-      toast({ title: 'Invalid Rate', description: 'Please enter a valid rate per liter', variant: 'destructive' });
+      toast({ title: 'Invalid Rate', variant: 'destructive' });
       return;
     }
 
     if (isNaN(newFreeTier) || newFreeTier < 0) {
-      toast({ title: 'Invalid Free Tier', description: 'Please enter a valid free tier amount', variant: 'destructive' });
+      toast({ title: 'Invalid Free Tier', variant: 'destructive' });
       return;
     }
 
-    const updatedRate: WaterRate = {
-      _id: rate?._id || generateId(),
-      ratePerLiter: newRateValue,
-      freeTierLiters: newFreeTier,
-      effectiveFrom: rate?.effectiveFrom || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    try {
+      setSaving(true);
 
-    setWaterRates([updatedRate]);
-    setRate(updatedRate);
-    
-    toast({ title: 'Settings Updated', description: `Free tier: ${newFreeTier.toLocaleString()}L, Rate: $${newRateValue.toFixed(4)}/L` });
+      const res = await fetch(`${API_URL}/water-rate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ratePerLiter: newRateValue,
+          freeTierLiters: newFreeTier,
+        }),
+      });
+
+      const data = await res.json();
+      setRate(data.data);
+
+      // ✅ reset dirty
+      setIsDirty(false);
+
+      toast({
+        title: "Saved",
+        description: "Water settings updated",
+      });
+
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "Error",
+        description: "Failed to save",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
   };
+
+  // ✅ Loader
+  if (loading) {
+    return (
+      <DashboardLayout navItems={adminNavItems} title="Admin Dashboard">
+        <div className="flex justify-center items-center h-64">
+          <p className="text-lg">Loading water settings...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout navItems={adminNavItems} title="Admin Dashboard">
-      <div className="space-y-6 animate-fade-in">
-        <div>
-          <h1 className="text-3xl font-display font-bold">Water Rate Configuration</h1>
-          <p className="text-muted-foreground mt-1">Set the per-liter rate for consumption above free tier</p>
-        </div>
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold">Water Rate Configuration</h1>
+
+        {/* ✅ Not Saved Warning */}
+      {isDirty && (
+  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-base font-semibold flex items-center gap-2">
+    ⚠️ Changes not saved
+  </div>
+)}
 
         <div className="grid gap-6 lg:grid-cols-2">
+
+          {/* FREE TIER */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Droplets className="h-5 w-5 text-primary" />
                 Free Tier Allowance
               </CardTitle>
-              <CardDescription>Monthly free water allowance for all users</CardDescription>
+              <CardDescription>Monthly free water allowance</CardDescription>
             </CardHeader>
+
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="freeTier">Free Liters per Month</Label>
-                <Input
-                  id="freeTier"
-                  type="number"
-                  step="1000"
-                  min="0"
-                  value={freeTierLiters}
-                  onChange={(e) => setFreeTierLiters(e.target.value)}
-                  className="text-lg font-mono"
-                />
-              </div>
-              <div className="p-4 rounded-lg bg-muted/50 flex items-start gap-3">
-                <Info className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-                <p className="text-sm text-muted-foreground">
-                  Every consumer gets {parseInt(freeTierLiters || '0').toLocaleString()} liters of water free each billing period. 
-                  They only pay for consumption above this threshold.
-                </p>
-              </div>
+              <Label>Free Liters per Month</Label>
+              <Input
+                type="number"
+                value={freeTierLiters}
+                onChange={(e) => {
+                  setFreeTierLiters(e.target.value);
+                  setIsDirty(true);
+                }}
+              />
+
+              <p className="text-sm text-muted-foreground">
+                Users get {parseInt(freeTierLiters || '0').toLocaleString()}L free.
+              </p>
             </CardContent>
           </Card>
 
+          {/* RATE */}
           <Card>
             <CardHeader>
               <CardTitle>Rate Per Liter</CardTitle>
-              <CardDescription>Applied to consumption above the free tier</CardDescription>
+              <CardDescription>Applied after free limit</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="rate">Rate per Liter ($)</Label>
-                <div className="flex gap-4">
-                  <Input
-                    id="rate"
-                    type="number"
-                    step="0.0001"
-                    min="0"
-                    value={ratePerLiter}
-                    onChange={(e) => setRatePerLiter(e.target.value)}
-                    className="text-lg font-mono"
-                  />
-                  <Button onClick={handleSave}>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Rate
-                  </Button>
-                </div>
-              </div>
 
-              <div className="p-4 rounded-lg border bg-card">
-                <p className="text-sm font-medium mb-3">Example Calculation:</p>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Total Consumption:</span>
-                    <span className="font-mono">20,000 liters</span>
-                  </div>
-                  <div className="flex justify-between text-success">
-                    <span>Free Tier:</span>
-                    <span className="font-mono">- {parseInt(freeTierLiters || '0').toLocaleString()} liters</span>
-                  </div>
-                  <div className="border-t pt-2 flex justify-between">
-                    <span className="text-muted-foreground">Chargeable:</span>
-                    <span className="font-mono">{Math.max(0, 20000 - parseInt(freeTierLiters || '0')).toLocaleString()} liters</span>
-                  </div>
-                  <div className="flex justify-between font-semibold text-primary">
-                    <span>Bill Amount:</span>
-                    <span className="font-mono">${(Math.max(0, 20000 - parseInt(freeTierLiters || '0')) * parseFloat(ratePerLiter || '0')).toFixed(2)}</span>
-                  </div>
-                </div>
+            <CardContent className="space-y-4">
+              <Label>Rate per Liter</Label>
+
+              <Input
+                type="number"
+                step="0.0001"
+                value={ratePerLiter}
+                onChange={(e) => {
+                  setRatePerLiter(e.target.value);
+                  setIsDirty(true);
+                }}
+              />
+
+              {/* ✅ Button with states */}
+              <Button onClick={handleSave} disabled={saving}>
+                {saving
+                  ? "Saving..."
+                  : isDirty
+                  ? (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Changes
+                    </>
+                  )
+                  : "Saved ✓"}
+              </Button>
+
+              {/* Example */}
+              <div className="text-sm border p-3 rounded">
+                <p>Example:</p>
+                <p>
+                  Bill = {(
+                    Math.max(0, 20000 - parseInt(freeTierLiters || '0')) *
+                    parseFloat(ratePerLiter || '0')
+                  ).toFixed(2)}
+                </p>
               </div>
 
               {rate && (
@@ -156,6 +200,7 @@ const AdminRates: React.FC = () => {
               )}
             </CardContent>
           </Card>
+
         </div>
       </div>
     </DashboardLayout>
