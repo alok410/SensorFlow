@@ -10,7 +10,7 @@ export const getWaterRate = async (req, res) => {
   }
 };
 
-// SAVE / UPDATE rate (with LIVE EMIT)
+// SAVE / UPDATE rate
 export const setWaterRate = async (req, res) => {
   try {
     const { ratePerLiter, freeTierLiters } = req.body;
@@ -23,22 +23,7 @@ export const setWaterRate = async (req, res) => {
 
     await newRate.save();
 
-    // ✅ GET SOCKET INSTANCE
-    const io = req.app.get("io");
-
-    // ✅ EMIT LIVE UPDATE
-    io.emit("rateUpdated", {
-      ratePerLiter: newRate.ratePerLiter,
-      freeTierLiters: newRate.freeTierLiters,
-    });
-
-    console.log("🔥 Rate emitted to all clients");
-
-    res.json({
-      message: "Saved successfully",
-      data: newRate,
-    });
-
+    res.json({ message: "Saved successfully", data: newRate });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

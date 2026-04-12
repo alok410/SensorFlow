@@ -5,7 +5,6 @@ import { StatsCard } from '@/components/StatsCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { io } from "socket.io-client";
 import { Label } from '@/components/ui/label';
 import type { MeterReading } from '@/types';
 import {
@@ -126,27 +125,6 @@ useEffect(() => {
       }
     })
     .catch(err => console.error("Rate fetch error:", err));
-}, []);
-useEffect(() => {
-  const socket = io(API_URL);
-
-  socket.on("rateUpdated", (data) => {
-    console.log("🔥 Rate updated:", data);
-
-    setWaterConfig({
-      ratePerLiter: data.ratePerLiter,
-      freeTierLiters: data.freeTierLiters,
-    });
-
-    toast({
-      title: "Rate Updated",
-      description: "Water rate changed by admin",
-    });
-  });
-
-  return () => {
-    socket.disconnect();
-  };
 }, []);
   /* ================= FETCH CONSUMER ================= */
   useEffect(() => {
