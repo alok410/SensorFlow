@@ -112,6 +112,7 @@ const ConsumerDashboard: React.FC = () => {
   );
   const [endDate, setEndDate] = useState<Date | undefined>(new Date());
   const [appliedStartDate, setAppliedStartDate] = useState(startDate);
+  const [allReadings, setAllReadings] = useState<MeterReading[]>([]);
   const [appliedEndDate, setAppliedEndDate] = useState(endDate);
 useEffect(() => {
   fetch(`${API_URL}/water-rate`)
@@ -181,166 +182,109 @@ useEffect(() => {
     setLoadingReadings(true);
 
     try {
-      
-      /* 1️⃣ Get historical readings from DB */
+      /* 1️⃣ Always fetch broader range (IMPORTANT) */
       const dbReadings = await fetchMeterReadingsFromSenseflow(
         consumer.meterId,
         consumer._id,
-        format(appliedStartDate, 'yyyy-MM-dd'),
-        format(appliedEndDate, 'yyyy-MM-dd')
+        format(subMonths(new Date(), 2), 'yyyy-MM-dd'), // last 2 months
+        format(new Date(), 'yyyy-MM-dd')
       );
-      
+
       let mergedReadings = [...dbReadings];
-      
-      /* 2️⃣ Fetch today's live readings from Senseflow */
-   const today = new Date();
-const todayStr = format(today, 'yyyy-MM-dd');
 
-/* fetch last 3 days instead of only today */
-const startSenseflow = format(subMonths(today, 0), 'yyyy-MM-dd'); // today
-const past3Days = new Date(today.getTime() - 3 * 86400000);
+      /* 2️⃣ Fetch today's live readings */
+      const today = new Date();
+      const todayStr = format(today, 'yyyy-MM-dd');
+      const past3Days = new Date(today.getTime() - 3 * 86400000);
 
-let apiData: any = null;
+      let apiData: any = null;
 
-try {
-
-  apiData = await getHistoricalReadings(
-    consumer.meterId,
-    format(past3Days, 'yyyy-MM-dd'),
-    format(today, 'yyyy-MM-dd')
-  );
-
-} catch (err) {
-
-  console.log("Senseflow API failed or no data for today");
-
-}
-
-/* filter only today's readings */
-const todayReadings =
-  apiData?.data?.filter((r: any) =>
-    r.reading_datetime.startsWith(todayStr)
-  ) || [];
-
-const exists = mergedReadings.some(
-  (r) => r.readingDate === todayStr
-);
-
-if (!exists) {
-
-  if (todayReadings.length >= 1) {
-
-    const sorted = [...todayReadings].sort(
-      (a, b) =>
-        new Date(a.reading_datetime).getTime() -
-        new Date(b.reading_datetime).getTime()
-    );
-
-    const earliest = sorted[0];
-    const latest = sorted[sorted.length - 1];
-
-    const opening = Number(earliest.meter_reading);
-    const closing = Number(latest.meter_reading);
-
-    const consumption =
-      sorted.length > 1
-        ? (closing - opening) * 1000
-        : 0;
-
-    mergedReadings.push({
-      _id: 'today-reading',
-      consumerId: consumer._id,
-      meterId: consumer.meterId,
-      source: 'smart_meter',
-      readingDate: todayStr,
-      reading: closing,
-      previousReading: opening,
-      consumption: consumption,
-    });
-
-  } else {
-
-    /* today data not found */
-
-    mergedReadings.push({
-      _id: 'today-reading-missing',
-      consumerId: consumer._id,
-      meterId: consumer.meterId,
-      source: 'smart_meter',
-      readingDate: todayStr,
-      reading: 0,
-      previousReading: 0,
-      consumption: 0,
-    });
-
-  }
-
-}
-
-      if (apiData?.data?.length >= 1) {
-
-        const sorted = [...apiData.data].sort(
-  (a, b) =>
-    new Date(a.reading_datetime).getTime() -
-    new Date(b.reading_datetime).getTime()
-);
-
-const earliest = sorted[0];
-const latest = sorted[sorted.length - 1];
-
-const opening = Number(earliest.meter_reading);
-const closing = Number(latest.meter_reading);
-
-const consumption = sorted.length > 1
-  ? (closing - opening) * 1000
-  : 0;
-
-        const todayStr = format(today, 'yyyy-MM-dd');
-
-        const exists = mergedReadings.some(
-          (r) => r.readingDate === todayStr
+      try {
+        apiData = await getHistoricalReadings(
+          consumer.meterId,
+          format(past3Days, 'yyyy-MM-dd'),
+          format(today, 'yyyy-MM-dd')
         );
-
-        if (!exists) {
-
-    mergedReadings.push({
-  _id: 'today-reading',
-  consumerId: consumer._id,
-  meterId: consumer.meterId,
-  source: 'smart_meter',
-  readingDate: todayStr,
-  reading: closing,
-  previousReading: opening,
-  consumption: consumption,
-});
-
-        }
-
+      } catch (err) {
+        console.log("Senseflow API failed");
       }
 
-setReadings(
-  mergedReadings.sort(
-    (a, b) =>
-      new Date(a.readingDate).getTime() -
-      new Date(b.readingDate).getTime()
-  )
-);
+      const todayReadings =
+        apiData?.data?.filter((r: any) =>
+          r.reading_datetime.startsWith(todayStr)
+        ) || [];
+
+      const exists = mergedReadings.some(
+        (r) => r.readingDate === todayStr
+      );
+
+      if (!exists) {
+        if (todayReadings.length >= 1) {
+          const sorted = [...todayReadings].sort(
+            (a, b) =>
+              new Date(a.reading_datetime).getTime() -
+              new Date(b.reading_datetime).getTime()
+          );
+
+          const opening = Number(sorted[0].meter_reading);
+          const closing = Number(sorted[sorted.length - 1].meter_reading);
+
+          const consumption =
+            sorted.length > 1 ? (closing - opening) * 1000 : 0;
+
+          mergedReadings.push({
+            _id: 'today-reading',
+            consumerId: consumer._id,
+            meterId: consumer.meterId,
+            source: 'smart_meter',
+            readingDate: todayStr,
+            reading: closing,
+            previousReading: opening,
+            consumption,
+          });
+        } else {
+          mergedReadings.push({
+            _id: 'today-reading-missing',
+            consumerId: consumer._id,
+            meterId: consumer.meterId,
+            source: 'smart_meter',
+            readingDate: todayStr,
+            reading: 0,
+            previousReading: 0,
+            consumption: 0,
+          });
+        }
+      }
+
+      /* 3️⃣ FINAL SORT */
+      const finalReadings = mergedReadings.sort(
+        (a, b) =>
+          new Date(a.readingDate).getTime() -
+          new Date(b.readingDate).getTime()
+      );
+
+      /* ✅ 4️⃣ FULL DATA (for stats cards) */
+      setAllReadings(finalReadings);
+
+      /* ✅ 5️⃣ FILTERED DATA (for table + chart) */
+      setReadings(
+        finalReadings.filter((r) =>
+          isWithinInterval(parseISO(r.readingDate), {
+            start: startOfDay(appliedStartDate),
+            end: endOfDay(appliedEndDate),
+          })
+        )
+      );
 
     } catch (err) {
-
       console.error('Error loading readings:', err);
-
     } finally {
-
       setLoadingReadings(false);
-
     }
   };
 
   loadReadings();
-
 }, [consumer?._id, appliedStartDate, appliedEndDate]);
-
   /* ================= LAST ACTIVE ================= */
   useEffect(() => {
     if (!consumer?.meterId) return;
@@ -356,23 +300,19 @@ setReadings(
 
 /* ================= THIS MONTH TOTAL ================= */
 const thisMonthTotal = useMemo(() => {
-  if (!readings || readings.length === 0) return 0;
+  if (!allReadings.length) return 0;
 
   const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
+  const month = now.getMonth();
+  const year = now.getFullYear();
 
-  return readings
+  return allReadings
     .filter((r) => {
-      const date = parseISO(r.readingDate);
-      return (
-        date.getMonth() === currentMonth &&
-        date.getFullYear() === currentYear
-      );
+      const d = parseISO(r.readingDate);
+      return d.getMonth() === month && d.getFullYear() === year;
     })
     .reduce((sum, r) => sum + r.consumption, 0);
-}, [readings]);
-
+}, [allReadings]);
 
   /* ================= DERIVED ================= */
   const filteredReadings = useMemo(() => {
