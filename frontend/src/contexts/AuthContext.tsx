@@ -10,15 +10,7 @@ export const AuthProvider = ({ children }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const isFirstLoad = sessionStorage.getItem("app_loaded");
 
-    if (!isFirstLoad) {
-      // Clear old login only when site opens first time
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-
-      sessionStorage.setItem("app_loaded", "true");
-    }
 
     // Load user if exists
     const storedUser = localStorage.getItem("user");
