@@ -92,6 +92,7 @@ const ConsumerDashboard: React.FC = () => {
   const [readings, setReadings] = useState<MeterReading[]>([]);
   const [loadingReadings, setLoadingReadings] = useState(false);
   const isFetchingRef = useRef(false);
+  const [monthReadings, setMonthReadings] = useState<MeterReading[]>([]);
   const [latestStatus, setLatestStatus] = useState<{
     last_active: string;
     meter_reading: string;
@@ -126,6 +127,30 @@ useEffect(() => {
     })
     .catch(err => console.error("Rate fetch error:", err));
 }, []);
+
+useEffect(() => {
+  if (!consumer) return;
+
+  const loadMonthData = async () => {
+    try {
+      const start = format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), 'yyyy-MM-dd');
+      const end = format(new Date(), 'yyyy-MM-dd');
+
+      const data = await fetchMeterReadingsFromSenseflow(
+        consumer.meterId,
+        consumer._id,
+        start,
+        end
+      );
+
+      setMonthReadings(data);
+    } catch (err) {
+      console.error("Month data error:", err);
+    }
+  };
+
+  loadMonthData();
+}, [consumer]);
   /* ================= FETCH CONSUMER ================= */
   useEffect(() => {
     if (!token) return;
@@ -356,22 +381,25 @@ setReadings(
 
 /* ================= THIS MONTH TOTAL ================= */
 const thisMonthTotal = useMemo(() => {
-  if (!readings || readings.length === 0) return 0;
+  if (!monthReadings?.length) return 0;
 
   const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
 
-  return readings
+  return monthReadings
     .filter((r) => {
-      const date = parseISO(r.readingDate);
+      const d = parseISO(r.readingDate);
       return (
-        date.getMonth() === currentMonth &&
-        date.getFullYear() === currentYear
+        d.getMonth() === now.getMonth() &&
+        d.getFullYear() === now.getFullYear()
       );
     })
-    .reduce((sum, r) => sum + r.consumption, 0);
-}, [readings]);
+    .reduce((sum, r) => sum + (r.consumption || 0), 0);
+}, [monthReadings]);
+
+const thisMonthChargeableLiters = useMemo(() => {
+  const free = waterConfig.freeTierLiters || 0;
+  return Math.max(0, thisMonthTotal - free);
+}, [thisMonthTotal, waterConfig]);
 
 
   /* ================= DERIVED ================= */
@@ -517,6 +545,12 @@ const thisMonthBill = useMemo(() => {
   value={`${thisMonthTotal.toLocaleString()} L`}
   icon={BarChart3}
   variant="success"
+/>
+<StatsCard
+  title="Chargeable Usage (This Month)"
+  value={`${thisMonthChargeableLiters.toLocaleString()} L`}
+  icon={Droplets}
+  variant="warning"
 />
           <StatsCard
             title="Last Active"
