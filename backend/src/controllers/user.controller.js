@@ -14,6 +14,7 @@ export const getMe = async (req, res) => {
       phone: user.phone,
       meterId: user.meterId || null,
       locationId: user.locationId || null,
+      
     });
   } catch (err) {
     console.error(err);

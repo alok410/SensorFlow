@@ -34,6 +34,14 @@ const userSchema = new mongoose.Schema(
       ref: "Location",
     },
 
+
+
+     isMobileVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+
     meterId: {
       type: String,
       sparse: true,
@@ -41,6 +49,7 @@ const userSchema = new mongoose.Schema(
         return this.role === "consumer";
       },
     },
+
       blockId: {
       type: String,
       sparse: true,
