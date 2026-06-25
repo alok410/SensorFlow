@@ -220,9 +220,24 @@ const Login: React.FC = () => {
           </DialogContent>
         </Dialog>
       </div>
-      <div>
-Run by SENSEFLOW INSTRUMENTS PRIVATE LIMITED
-      </div>
+   <div
+  style={{
+    textAlign: "center",
+    padding: "16px",
+    fontSize: "12px",
+    color: "#64748b",
+    marginTop: "20px"
+  }}
+>
+  Powered by{" "}
+  <span style={{ fontWeight: 600, color: "#0f172a" }}>
+    SENSEFLOW INSTRUMENTS PRIVATE LIMITED
+  </span>
+  <br />
+  <span style={{ fontSize: "11px", color: "#94a3b8" }}>
+    © 2026 All Rights Reserved
+  </span>
+</div>
     </div>
   );
 };
