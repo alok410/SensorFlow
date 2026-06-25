@@ -150,6 +150,9 @@ const Signup: React.FC = () => {
           </CardFooter>
         </Card>
       </div>
+      <div>
+        Run by SENSEFLOW INSTRUMENTS PRIVATE LIMITED
+      </div>
     </div>
   );
 };
