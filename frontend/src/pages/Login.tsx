@@ -220,6 +220,9 @@ const Login: React.FC = () => {
           </DialogContent>
         </Dialog>
       </div>
+      <div>
+Run by SENSEFLOW INSTRUMENTS PRIVATE LIMITED
+      </div>
     </div>
   );
 };
